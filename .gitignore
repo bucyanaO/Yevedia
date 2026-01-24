@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+venv/
+
+# Database
+*.db
+
+# Environment
+.env
+
+# Generated images (too large)
+generated_images/
+
+# Web knowledge cache
+web_knowledge/
+
+# Training data (large)
+training/data/scripts/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# App bundle
+Yevedia.app/
+
+# Logs
+*.log
