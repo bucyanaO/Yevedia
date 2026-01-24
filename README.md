@@ -42,7 +42,40 @@
 
 ---
 
-## 🚀 Installation
+## � Le Modèle yevedia-libre
+
+**yevedia-libre** est le modèle IA par défaut, basé sur **Dolphin-Llama3** (non censuré).
+
+### Caractéristiques
+| Propriété | Valeur |
+|-----------|--------|
+| Base | Dolphin-Llama3 |
+| Taille | 4.3 GB |
+| Paramètres | ~8B |
+| Censure | ❌ Aucune |
+| Contexte | 8192 tokens |
+
+### yevedia-libre vs GPT/Gemini
+
+| Aspect | **yevedia-libre** | **GPT-4 / Gemini** |
+|--------|-------------------|-------------------|
+| **Hébergement** | 🏠 100% local (ton Mac) | ☁️ Serveurs cloud |
+| **Confidentialité** | ✅ Données restent chez toi | ⚠️ Envoyées aux serveurs |
+| **Coût** | 💚 Gratuit | 💰 Payant (API/abo) |
+| **Connexion** | 📴 Fonctionne hors-ligne | 🌐 Internet requis |
+| **Taille** | ~8B paramètres | ~175B-1T+ paramètres |
+| **Personnalisation** | ✅ Fine-tuning possible | ❌ Impossible |
+| **Censure** | ✅ Libre | ⚠️ Modérée |
+
+### Pourquoi choisir yevedia-libre ?
+- **Souveraineté** : Tes conversations restent privées
+- **Personnalisation** : Fine-tuning avec tes propres données
+- **Liberté** : Pas de restrictions de contenu
+- **Économique** : Aucun frais récurrent après installation
+
+---
+
+## �🚀 Installation
 
 ### Prérequis
 - **macOS** avec Apple Silicon (M1/M2/M3)
