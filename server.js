@@ -52,6 +52,19 @@ const server = http.createServer(async (req, res) => {
         return handleOllamaTags(req, res);
     }
 
+    // MLX Server API
+    if (req.url === '/api/mlx/start' && req.method === 'POST') {
+        return handleStartMLX(req, res);
+    }
+
+    if (req.url === '/api/mlx/stop' && req.method === 'POST') {
+        return handleStopMLX(req, res);
+    }
+
+    if (req.url === '/api/mlx/status' && req.method === 'GET') {
+        return handleMLXStatus(req, res);
+    }
+
     if (req.url === '/api/whisper/transcribe' && req.method === 'POST') {
         return handleWhisperTranscribe(req, res);
     }
@@ -333,16 +346,58 @@ async function handleOllamaStatus(req, res) {
 
 async function handleOllamaTags(req, res) {
     try {
-        const response = await fetch('http://localhost:11434/api/tags');
-        if (response.ok) {
-            const data = await response.json();
-            sendJSON(res, { success: true, models: data.models || [] });
-        } else {
-            sendJSON(res, { success: false, error: 'Impossible de récupérer la liste des modèles' });
+        let models = [];
+
+        // Get Ollama models
+        try {
+            const response = await fetch('http://localhost:11434/api/tags');
+            if (response.ok) {
+                const data = await response.json();
+                models = data.models || [];
+            }
+        } catch (e) {
+            // Ollama not running
         }
+
+        // Check for MLX Qwen3 model
+        try {
+            const mlxResponse = await fetch('http://localhost:8081/health');
+            if (mlxResponse.ok) {
+                // MLX server is running, add Qwen3 to list
+                models.push({
+                    name: 'qwen3-32b:mlx',
+                    model: 'qwen3-32b:mlx',
+                    size: 18400000000,
+                    details: {
+                        family: 'qwen3',
+                        parameter_size: '32B',
+                        format: 'mlx'
+                    }
+                });
+            }
+        } catch (e) {
+            // MLX server not running, check if model exists
+            const fs = require('fs');
+            const modelPath = require('os').homedir() + '/.cache/huggingface/hub/models--mlx-community--Qwen3-32B-4bit';
+            if (fs.existsSync(modelPath)) {
+                models.push({
+                    name: 'qwen3-32b:mlx (offline)',
+                    model: 'qwen3-32b:mlx',
+                    size: 18400000000,
+                    details: {
+                        family: 'qwen3',
+                        parameter_size: '32B',
+                        format: 'mlx',
+                        status: 'offline - start MLX server'
+                    }
+                });
+            }
+        }
+
+        sendJSON(res, { success: true, models });
     } catch (error) {
-        console.error('Erreur ollama tags:', error);
-        sendJSON(res, { success: false, error: 'Ollama non joignable' });
+        console.error('Erreur tags:', error);
+        sendJSON(res, { success: false, error: 'Erreur récupération modèles' });
     }
 }
 
@@ -1303,6 +1358,89 @@ process.on('SIGINT', async () => {
 server.listen(PORT, () => {
     // Initialiser la base de données au démarrage
     exec(`python3 -c "import sys; sys.path.insert(0, '${__dirname}'); import memory; memory.init_database()"`, { cwd: __dirname });
+
+    // ============================================
+    // MLX SERVER HANDLERS
+    // ============================================
+
+    let mlxProcess = null;
+
+    /**
+     * POST /api/mlx/start - Start MLX server for MiniMax
+     */
+    async function handleStartMLX(req, res) {
+        try {
+            // Check if already running
+            try {
+                const check = await fetch('http://localhost:8081/health');
+                if (check.ok) {
+                    sendJSON(res, { success: true, message: 'MLX server déjà en cours' });
+                    return;
+                }
+            } catch (e) { }
+
+            console.log('🔄 Démarrage du serveur MLX...');
+
+            const pythonPath = path.join(__dirname, 'venv', 'bin', 'python3');
+            const scriptPath = path.join(__dirname, 'mlx_server.py');
+
+            mlxProcess = spawn(pythonPath, [scriptPath], {
+                cwd: __dirname,
+                detached: true,
+                stdio: 'ignore'
+            });
+            mlxProcess.unref();
+
+            // Wait for server to start
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Check if running
+            try {
+                const check = await fetch('http://localhost:8081/health');
+                if (check.ok) {
+                    console.log('✅ Serveur MLX démarré (port 8081)');
+                    sendJSON(res, { success: true, message: 'MLX server démarré' });
+                    return;
+                }
+            } catch (e) { }
+
+            sendJSON(res, { success: false, error: 'Impossible de démarrer le serveur MLX' }, 500);
+        } catch (error) {
+            console.error('Erreur démarrage MLX:', error);
+            sendJSON(res, { success: false, error: error.message }, 500);
+        }
+    }
+
+    /**
+     * POST /api/mlx/stop - Stop MLX server
+     */
+    async function handleStopMLX(req, res) {
+        try {
+            console.log('⛔ Arrêt du serveur MLX...');
+            await executeCommand('pkill -f "mlx_server.py" 2>/dev/null || true');
+            mlxProcess = null;
+            sendJSON(res, { success: true, message: 'MLX server arrêté' });
+        } catch (error) {
+            sendJSON(res, { success: true, message: 'MLX server arrêté' });
+        }
+    }
+
+    /**
+     * GET /api/mlx/status - Check MLX server status
+     */
+    async function handleMLXStatus(req, res) {
+        try {
+            const response = await fetch('http://localhost:8081/health');
+            if (response.ok) {
+                const data = await response.json();
+                sendJSON(res, { running: true, model: data.model });
+            } else {
+                sendJSON(res, { running: false });
+            }
+        } catch (error) {
+            sendJSON(res, { running: false });
+        }
+    }
 
     console.log(`
 ╔═══════════════════════════════════════════════════╗
