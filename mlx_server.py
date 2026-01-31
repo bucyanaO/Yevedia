@@ -122,6 +122,7 @@ class MLXHandler(BaseHTTPRequestHandler):
             messages = data.get('messages', [])
             max_tokens = data.get('max_tokens', 2048)
             temperature = data.get('temperature', 0.7)
+            enable_thinking = data.get('enable_thinking', True)  # Qwen3 thinking mode
             
             # Inject system prompt if not present
             has_system = any(m.get('role') == 'system' for m in messages)
@@ -130,7 +131,18 @@ class MLXHandler(BaseHTTPRequestHandler):
             
             # Build prompt with chat template if available
             if hasattr(tok, 'apply_chat_template'):
-                prompt = tok.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+                # For Qwen3: enable_thinking=False skips reasoning for faster responses
+                try:
+                    prompt = tok.apply_chat_template(
+                        messages, 
+                        add_generation_prompt=True, 
+                        tokenize=False,
+                        enable_thinking=enable_thinking  # Qwen3 specific
+                    )
+                except TypeError:
+                    # Fallback if tokenizer doesn't support enable_thinking
+                    prompt = tok.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+                
                 # If still returns list, decode it
                 if isinstance(prompt, list):
                     prompt = tok.decode(prompt)
@@ -147,7 +159,8 @@ class MLXHandler(BaseHTTPRequestHandler):
                         prompt += f"Assistant: {content}\n\n"
                 prompt += "Assistant:"
             
-            print(f"🤖 Generating response...")
+            thinking_mode = "🧠 Thinking ON" if enable_thinking else "⚡ Fast mode"
+            print(f"🤖 Generating response... ({thinking_mode})")
             
             response = generate(
                 m, tok,

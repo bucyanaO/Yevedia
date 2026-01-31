@@ -12,6 +12,11 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=mono">
+    <!-- Drawflow for Node Editor -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 
 <body>
@@ -73,6 +78,42 @@
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
+                </svg>
+            </button>
+            <button class="star star-film" data-tooltip="Film AI" onclick="openFilmGenerator()"
+                aria-label="Générateur de films autonome">
+                <div class="star-glow"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+                    <line x1="7" y1="2" x2="7" y2="22" />
+                    <line x1="17" y1="2" x2="17" y2="22" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <line x1="2" y1="7" x2="7" y2="7" />
+                    <line x1="2" y1="17" x2="7" y2="17" />
+                    <line x1="17" y1="17" x2="22" y2="17" />
+                    <line x1="17" y1="7" x2="22" y2="7" />
+                </svg>
+            </button>
+            <button class="star star-nodes" data-tooltip="Éditeur Nodal" onclick="showView('nodes')"
+                aria-label="Éditeur nodal visuel">
+                <div class="star-glow"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="5" cy="6" r="3" />
+                    <circle cx="19" cy="6" r="3" />
+                    <circle cx="12" cy="18" r="3" />
+                    <line x1="8" y1="6" x2="16" y2="6" />
+                    <line x1="5" y1="9" x2="12" y2="15" />
+                    <line x1="19" y1="9" x2="12" y2="15" />
+                </svg>
+            </button>
+            <button class="star star-tts" data-tooltip="Text-to-Speech" onclick="openTTSModal()"
+                aria-label="Synthèse vocale">
+                <div class="star-glow"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
                 </svg>
             </button>
             <button class="star star-memory" data-tooltip="Mémoire" onclick="toggleMemory()">
@@ -160,9 +201,26 @@
                         <line x1="8" y1="23" x2="16" y2="23" />
                     </svg>
                 </button>
+                <!-- Bouton Mode Vocal - IA parle les réponses -->
+                <button class="capsule-action voice-mode-action" id="voiceModeBtn" onclick="toggleVoiceMode()"
+                    title="Mode vocal (l'IA parle)">
+                    🔇
+                </button>
                 <!-- Bouton Image Mode avec Popup -->
                 <div class="image-btn-container">
                     <div class="image-options-popup" id="imageOptionsPopup">
+                        <div class="popup-group">
+                            <span class="popup-label">Modele</span>
+                            <div class="popup-pills">
+                                <button class="popup-pill active" data-model="flux" onclick="selectImageModel(this)"
+                                    title="Local MLX">FLUX</button>
+                                <button class="popup-pill" data-model="nanobanana" onclick="selectImageModel(this)"
+                                    title="Google Gemini - Rapide">Banana</button>
+                                <button class="popup-pill" data-model="nanobanana-pro" onclick="selectImageModel(this)"
+                                    title="Google Gemini - Pro">Banana Pro</button>
+                            </div>
+                        </div>
+                        <div class="popup-divider"></div>
                         <div class="popup-group">
                             <span class="popup-label">Ratio</span>
                             <div class="popup-pills">
@@ -176,7 +234,7 @@
                         </div>
                         <div class="popup-divider"></div>
                         <div class="popup-group">
-                            <span class="popup-label">Qualité</span>
+                            <span class="popup-label">Qualite</span>
                             <div class="popup-pills">
                                 <button class="popup-pill active" data-steps="4"
                                     onclick="selectImageQuality(this)">Rapide</button>
@@ -190,6 +248,49 @@
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                             <circle cx="8.5" cy="8.5" r="1.5" />
                             <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- Bouton Video Mode avec Popup -->
+                <div class="video-btn-container">
+                    <div class="video-options-popup" id="videoOptionsPopup">
+                        <div class="popup-group">
+                            <span class="popup-label">Durée</span>
+                            <div class="popup-pills">
+                                <button class="popup-pill active" data-duration="6"
+                                    onclick="selectVideoDuration(this)">6s</button>
+                                <button class="popup-pill" data-duration="8"
+                                    onclick="selectVideoDuration(this)">8s</button>
+                                <button class="popup-pill" data-duration="10"
+                                    onclick="selectVideoDuration(this)">10s</button>
+                            </div>
+                        </div>
+                        <div class="popup-divider"></div>
+                        <div class="popup-group">
+                            <span class="popup-label">Résolution</span>
+                            <div class="popup-pills">
+                                <button class="popup-pill active" data-res="1080p"
+                                    onclick="selectVideoResolution(this)">1080p</button>
+                                <button class="popup-pill" data-res="1440p"
+                                    onclick="selectVideoResolution(this)">1440p</button>
+                            </div>
+                        </div>
+                        <div class="popup-divider"></div>
+                        <div class="popup-group">
+                            <span class="popup-label">Audio</span>
+                            <div class="popup-pills">
+                                <button class="popup-pill active" data-audio="true" onclick="selectVideoAudio(this)">🔊
+                                    Avec</button>
+                                <button class="popup-pill" data-audio="false" onclick="selectVideoAudio(this)">🔇
+                                    Sans</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="capsule-action video-action" id="videoBtn" onclick="toggleVideoMode()"
+                        title="Mode Vidéo (LTX)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <polygon points="23 7 16 12 23 17 23 7" />
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                         </svg>
                     </button>
                 </div>
@@ -265,6 +366,101 @@
         </div>
     </div>
 
+    <!-- Node Editor View -->
+    <div class="view-container node-editor-view hidden" id="nodeEditorView">
+        <div class="node-editor-header">
+            <button class="node-back-btn" onclick="showView('home')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+            </button>
+            <h2>Éditeur Nodal</h2>
+            <div class="node-editor-actions">
+                <button class="node-action-btn" onclick="clearNodeEditor()" title="Effacer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                </button>
+                <button class="node-action-btn" onclick="saveNodeFlow()" title="Sauvegarder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                </button>
+                <button class="node-action-btn primary" onclick="executeNodeFlow()" title="Exécuter">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="node-editor-body">
+            <!-- Node Palette - Left Sidebar -->
+            <div class="node-palette">
+                <div class="palette-section">
+                    <h4>Entrées</h4>
+                    <div class="palette-node" draggable="true" data-node-type="text-input">
+                        <span class="palette-icon">📝</span>
+                        <span>Texte</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="image-input">
+                        <span class="palette-icon">🖼️</span>
+                        <span>Image</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="audio-input">
+                        <span class="palette-icon">🎵</span>
+                        <span>Audio</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="video-input">
+                        <span class="palette-icon">🎬</span>
+                        <span>Vidéo</span>
+                    </div>
+                </div>
+                <div class="palette-section">
+                    <h4>IA</h4>
+                    <div class="palette-node" draggable="true" data-node-type="llm-chat">
+                        <span class="palette-icon">🤖</span>
+                        <span>Chat LLM</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="vision">
+                        <span class="palette-icon">👁️</span>
+                        <span>Vision</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="image-gen">
+                        <span class="palette-icon">🎨</span>
+                        <span>Image Gen</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="video-gen">
+                        <span class="palette-icon">🎥</span>
+                        <span>Video Gen</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="tts">
+                        <span class="palette-icon">🔊</span>
+                        <span>TTS</span>
+                    </div>
+                </div>
+                <div class="palette-section">
+                    <h4>Sorties</h4>
+                    <div class="palette-node" draggable="true" data-node-type="display">
+                        <span class="palette-icon">📺</span>
+                        <span>Affichage</span>
+                    </div>
+                    <div class="palette-node" draggable="true" data-node-type="text-output">
+                        <span class="palette-icon">📄</span>
+                        <span>Texte</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drawflow Canvas -->
+            <div id="drawflowCanvas" class="drawflow-canvas"></div>
+        </div>
+    </div>
+
     <!-- Settings Panel (Modal) -->
     <div class="modal-layer" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"
         aria-hidden="true">
@@ -303,6 +499,16 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <div class="settings-toggle-row" style="margin-top: 12px;">
+                        <span>🗣️ Mode Libre (Yevedia parle spontanément)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="proactiveMode" onchange="toggleProactiveMode(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <p class="settings-hint" style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted);">
+                        Yevedia peut t'écrire de temps en temps sans attendre que tu parles
+                    </p>
                 </div>
 
                 <div class="settings-section">
@@ -319,6 +525,21 @@
                 </div>
 
                 <div class="settings-section">
+                    <label class="settings-label">🧠 Mode Réflexion (Qwen3)</label>
+                    <div class="settings-toggle-row">
+                        <span>Réponses rapides (sans réflexion)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="disableThinking" onchange="toggleThinkingMode(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <p class="settings-hint" style="margin-top: 6px; font-size: 0.75rem; color: var(--text-muted);">
+                        ⚡ Activé = réponses directes et rapides<br>
+                        🧠 Désactivé = réflexion approfondie (plus lent)
+                    </p>
+                </div>
+
+                <div class="settings-section">
                     <label class="settings-label">🎤 Reconnaissance vocale</label>
                     <select id="speechEngine" class="settings-field" onchange="setSpeechEngine(this.value)">
                         <option value="webspeech">Web Speech API (rapide, internet)</option>
@@ -327,6 +548,20 @@
                     <p class="settings-hint" style="margin-top: 6px; font-size: 0.75rem; color: var(--text-muted);">
                         Whisper: plus précis mais charge un modèle (~1GB)
                     </p>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <!-- MLX Model Manager Section -->
+                <div class="settings-section">
+                    <label class="settings-label">🧠 Modèles MLX locaux</label>
+                    <p class="settings-hint">Allumez/éteignez les modèles individuellement pour économiser la mémoire
+                    </p>
+
+                    <div class="mlx-models-grid" id="mlxModelsGrid">
+                        <!-- Populated dynamically -->
+                        <div class="mlx-model-loading">Chargement...</div>
+                    </div>
                 </div>
 
                 <div class="settings-divider"></div>
@@ -587,6 +822,376 @@
                                 </svg>
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TTS Modal -->
+    <div class="modal-overlay" id="ttsModal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        style="width:24px;height:24px;vertical-align:middle;margin-right:8px;">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </svg>Text-to-Speech (Qwen3-TTS)</h2>
+                <button class="modal-close" onclick="closeTTSModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ttsText"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>Texte à synthétiser</label>
+                    <textarea id="ttsText" rows="4" placeholder="Entrez le texte à convertir en parole..."
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px; resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px; display: flex; gap: 12px;">
+                    <div style="flex: 1;">
+                        <label for="ttsLanguage"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="2" y1="12" x2="22" y2="12" />
+                                <path
+                                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                            </svg>Langue</label>
+                        <select id="ttsLanguage"
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary);">
+                            <option value="Auto">[AUTO] Auto-détection</option>
+                            <option value="French">[FR] Français</option>
+                            <option value="English">[EN] English</option>
+                            <option value="Chinese">[ZH] 中文</option>
+                            <option value="German">[DE] Deutsch</option>
+                            <option value="Spanish">[ES] Español</option>
+                            <option value="Italian">[IT] Italiano</option>
+                            <option value="Japanese">[JP] 日本語</option>
+                            <option value="Korean">[KR] 한국어</option>
+                            <option value="Portuguese">[PT] Português</option>
+                            <option value="Russian">[RU] Русский</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="ttsSpeaker"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                <line x1="12" y1="19" x2="12" y2="23" />
+                                <line x1="8" y1="23" x2="16" y2="23" />
+                            </svg>Voix</label>
+                        <select id="ttsSpeaker"
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary);">
+                            <option value="serena">[F] Serena (EN)</option>
+                            <option value="aiden">[M] Aiden (EN)</option>
+                            <option value="dylan">[M] Dylan (EN)</option>
+                            <option value="eric">[M] Eric (EN)</option>
+                            <option value="vivian">[F] Vivian (ZH)</option>
+                            <option value="ryan">[M] Ryan (ZH)</option>
+                            <option value="uncle_fu">[M] Uncle Fu (ZH)</option>
+                            <option value="ono_anna">[F] Ono Anna (JP)</option>
+                            <option value="sohee">[F] Sohee (KR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <label for="ttsInstruct"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                            <line x1="9" y1="9" x2="9.01" y2="9" />
+                            <line x1="15" y1="9" x2="15.01" y2="9" />
+                        </svg>Style/Émotion (optionnel)</label>
+                    <input type="text" id="ttsInstruct" placeholder="Ex: avec joie, ton triste, énergique..."
+                        style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary);">
+                </div>
+
+                <!-- TTS Mode Toggle -->
+                <div class="form-group" style="margin-top: 20px;">
+                    <label><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                            <line x1="4" y1="21" x2="4" y2="14" />
+                            <line x1="4" y1="10" x2="4" y2="3" />
+                            <line x1="12" y1="21" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12" y2="3" />
+                            <line x1="20" y1="21" x2="20" y2="16" />
+                            <line x1="20" y1="12" x2="20" y2="3" />
+                            <line x1="1" y1="14" x2="7" y2="14" />
+                            <line x1="9" y1="8" x2="15" y2="8" />
+                            <line x1="17" y1="16" x2="23" y2="16" />
+                        </svg>Mode</label>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="popup-pill active" id="ttsModeCuston" onclick="setTTSMode('custom')"><svg
+                                class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                style="width:14px;height:14px;vertical-align:middle;margin-right:4px;">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            </svg>Voix Prédéfinie</button>
+                        <button class="popup-pill" id="ttsModeClone" onclick="setTTSMode('clone')"><svg class="icon"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                style="width:14px;height:14px;vertical-align:middle;margin-right:4px;">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>Cloner une Voix</button>
+                    </div>
+                </div>
+
+                <!-- Voice Clone Section (hidden by default) -->
+                <div id="ttsCloneSection"
+                    style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-tertiary); border-radius: 12px; border: 2px dashed var(--border-medium);">
+                    <h4 style="margin: 0 0 12px 0; color: var(--text-primary);"><svg class="icon" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round"
+                            style="width:18px;height:18px;vertical-align:middle;margin-right:6px;">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            <line x1="12" y1="19" x2="12" y2="23" />
+                            <line x1="8" y1="23" x2="16" y2="23" />
+                        </svg>Audio de Référence</h4>
+                    <input type="file" id="ttsRefAudio" accept="audio/*"
+                        style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary);">
+                    <audio id="ttsRefAudioPreview" controls
+                        style="width: 100%; margin-top: 8px; display: none;"></audio>
+
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label for="ttsRefText"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                            </svg>Transcription de l'audio (ce qui est dit)</label>
+                        <input type="text" id="ttsRefText" placeholder="Tapez exactement ce qui est dit dans l'audio..."
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary);">
+                    </div>
+                </div>
+
+                <button id="ttsGenerateBtn" onclick="generateTTS()" class="primary-btn"
+                    style="width: 100%; margin-top: 20px; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        style="width:18px;height:18px;vertical-align:middle;margin-right:6px;">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </svg>Générer la Parole
+                </button>
+
+                <div id="ttsResult"
+                    style="display: none; margin-top: 20px; padding: 16px; background: var(--bg-tertiary); border-radius: 12px;">
+                    <audio id="ttsAudioPlayer" controls style="width: 100%;"></audio>
+                    <div style="margin-top: 12px; display: flex; gap: 8px;">
+                        <a id="ttsDownloadBtn" href="#" download="speech.wav" class="secondary-btn"
+                            style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: var(--bg-elevated); color: var(--text-primary); text-decoration: none;">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>Télécharger
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Generator Modal -->
+    <div class="modal-overlay" id="filmModal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round"
+                        style="width:24px;height:24px;vertical-align:middle;margin-right:8px;">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+                        <line x1="7" y1="2" x2="7" y2="22" />
+                        <line x1="17" y1="2" x2="17" y2="22" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <line x1="2" y1="7" x2="7" y2="7" />
+                        <line x1="2" y1="17" x2="7" y2="17" />
+                        <line x1="17" y1="17" x2="22" y2="17" />
+                        <line x1="17" y1="7" x2="22" y2="7" />
+                    </svg>Générateur de Film AI</h2>
+                <button class="modal-close" onclick="closeFilmGenerator()">×</button>
+            </div>
+
+            <div class="modal-body" id="filmModalBody">
+                <!-- Step 1: Theme & Style -->
+                <div id="filmStep1">
+                    <div class="form-group">
+                        <label for="filmTheme">🎭 Thème du film</label>
+                        <input type="text" id="filmTheme" placeholder="Ex: Un chat qui explore une ville futuriste"
+                            style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px;">
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>🎨 Style visuel</label>
+                        <div class="style-pills" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                            <button class="popup-pill active" data-style="cinematic" onclick="selectFilmStyle(this)">🎬
+                                Cinématique</button>
+                            <button class="popup-pill" data-style="anime" onclick="selectFilmStyle(this)">🌸
+                                Anime</button>
+                            <button class="popup-pill" data-style="3d" onclick="selectFilmStyle(this)">🎮 3D
+                                Pixar</button>
+                            <button class="popup-pill" data-style="realistic" onclick="selectFilmStyle(this)">📷
+                                Réaliste</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>🖼️ Générateur d'images</label>
+                        <div class="style-pills" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                            <button class="popup-pill active" data-provider="flux"
+                                onclick="selectFilmImageProvider(this)">⚡ FLUX (Local)</button>
+                            <button class="popup-pill" data-provider="nanobanana"
+                                onclick="selectFilmImageProvider(this)">🍌 NanoBanana</button>
+                            <button class="popup-pill" data-provider="nanobanana-pro"
+                                onclick="selectFilmImageProvider(this)">🍌✨ NanoBanana Pro</button>
+                        </div>
+                        <p style="margin-top: 6px; font-size: 0.75rem; color: var(--text-muted);">
+                            FLUX = local et rapide | NanoBanana = Google Gemini via cloud
+                        </p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label for="filmLanguage">🌐 Langue du scénario</label>
+                        <select id="filmLanguage"
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-medium); background: var(--bg-elevated); color: var(--text-primary); font-size: 14px; margin-top: 8px;">
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="en">🇬🇧 English</option>
+                            <option value="es">🇪🇸 Español</option>
+                            <option value="de">🇩🇪 Deutsch</option>
+                            <option value="it">🇮🇹 Italiano</option>
+                            <option value="pt">🇧🇷 Português</option>
+                        </select>
+                    </div>
+
+                    <button onclick="generateScenario()" class="primary-btn"
+                        style="width: 100%; margin-top: 20px; padding: 14px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        📝 Générer le Scénario
+                    </button>
+                </div>
+
+                <!-- Step 2: Scenario Preview -->
+                <div id="filmStep2" style="display: none;">
+                    <h3 id="filmTitle" style="margin-bottom: 16px;">Titre du film</h3>
+                    <div id="scenarioPreview" style="max-height: 300px; overflow-y: auto;"></div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 20px;">
+                        <button onclick="backToStep1()" class="secondary-btn"
+                            style="flex: 1; padding: 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: 10px; color: var(--text-primary); cursor: pointer;">
+                            ← Modifier
+                        </button>
+                        <button onclick="startFilmGeneration()" class="primary-btn"
+                            style="flex: 2; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
+                            🎬 Générer le Film (~6 min)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Progress -->
+                <div id="filmStep3" style="display: none;">
+                    <div class="progress-container" style="text-align: center;">
+                        <div class="progress-circle"
+                            style="width: 120px; height: 120px; margin: 0 auto 20px; position: relative;">
+                            <svg viewBox="0 0 100 100" style="transform: rotate(-90deg);">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="var(--border-subtle)"
+                                    stroke-width="8" />
+                                <circle id="filmProgressCircle" cx="50" cy="50" r="45" fill="none"
+                                    stroke="url(#progressGradient)" stroke-width="8" stroke-linecap="round"
+                                    stroke-dasharray="283" stroke-dashoffset="283" />
+                                <defs>
+                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#a855f7" />
+                                        <stop offset="100%" stop-color="#10b981" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <span id="filmProgressPercent"
+                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: bold;">0%</span>
+                        </div>
+                        <p id="filmProgressStep" style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Initialisation...</p>
+                        <div id="filmScenesPreview"
+                            style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;"></div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Timeline Editor -->
+                <div id="filmStep4" style="display: none;">
+                    <h3 style="margin-bottom: 16px; text-align: center;">🎬 Timeline - Éditeur de Clips</h3>
+
+                    <!-- Main Preview -->
+                    <div style="background: var(--bg-deep); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <video id="timelinePreview" controls
+                            style="width: 100%; max-height: 300px; border-radius: 8px; background: #000;"></video>
+                    </div>
+
+                    <!-- Timeline Track -->
+                    <div
+                        style="background: var(--bg-elevated); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary);">Timeline</span>
+                            <button onclick="playAllClips()" class="timeline-btn"
+                                style="margin-left: auto; padding: 6px 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 6px; color: white; font-size: 12px; cursor: pointer;">▶
+                                Lecture</button>
+                        </div>
+                        <div id="timelineTrack"
+                            style="display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; min-height: 80px;">
+                            <!-- Clips will be added here -->
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                            <span>00:00</span>
+                            <span id="timelineDuration">00:40</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="addMoreScenes()" class="secondary-btn"
+                            style="flex: 1; padding: 12px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: 10px; color: var(--text-primary); cursor: pointer;">
+                            ➕ Ajouter scène
+                        </button>
+                        <button onclick="renderFinalFilm()" class="primary-btn"
+                            style="flex: 2; padding: 12px; background: linear-gradient(135deg, #a855f7, #7c3aed); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
+                            🎬 Exporter le Film
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Complete -->
+                <div id="filmStep5" style="display: none; text-align: center;">
+                    <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+                    <h3 style="margin-bottom: 16px;">Film Terminé !</h3>
+                    <video id="filmPreview" controls autoplay loop
+                        style="max-width: 100%; border-radius: 12px; margin-bottom: 16px;"></video>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <a id="filmDownloadBtn" href="#" download class="primary-btn"
+                            style="padding: 12px 24px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 10px; color: white; text-decoration: none; font-weight: 600;">
+                            ⬇️ Télécharger
+                        </a>
+                        <button onclick="closeFilmGenerator()" class="secondary-btn"
+                            style="padding: 12px 24px; background: var(--bg-elevated); border: 1px solid var(--border-medium); border-radius: 10px; color: var(--text-primary); cursor: pointer;">
+                            Fermer
+                        </button>
                     </div>
                 </div>
             </div>
