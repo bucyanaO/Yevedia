@@ -7380,6 +7380,306 @@ Détails: {{2}}" style="width:100%;padding:8px;border-radius:6px;border:1px soli
                     <div class="node-output-preview" data-preview style="margin-top:8px;"></div>
                 </div>
             `
+        },
+        // ========== ROBOTICS NODES ==========
+        'robot-chassis': {
+            name: '🦿 Chassis Robot',
+            inputs: 0,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #4caf50;">
+                    <label>Type de robot</label>
+                    <select class="robot-chassis-type">
+                        <option value="wheeled">🛞 Roues (2WD/4WD)</option>
+                        <option value="tracked">🔗 Chenilles</option>
+                        <option value="legged">🦵 Pattes (4/6)</option>
+                        <option value="drone">🚁 Drone</option>
+                        <option value="arm">🦾 Bras robotique</option>
+                    </select>
+                    <label>Dimensions (cm)</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="number" value="20" min="5" max="200" placeholder="L" style="width:33%;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#fff;">
+                        <input type="number" value="15" min="5" max="200" placeholder="l" style="width:33%;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#fff;">
+                        <input type="number" value="10" min="5" max="200" placeholder="H" style="width:33%;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#fff;">
+                    </div>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;text-align:center;">
+                        <div style="font-size:40px;">🤖</div>
+                        <div style="font-size:11px;color:#4caf50;">Robot configuré</div>
+                    </div>
+                </div>
+            `
+        },
+        'robot-motor': {
+            name: '⚙️ Moteur',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #4caf50;">
+                    <label>Type de moteur</label>
+                    <select class="robot-motor-type">
+                        <option value="dc">DC Motor</option>
+                        <option value="servo">Servo (0-180°)</option>
+                        <option value="stepper">Stepper Motor</option>
+                        <option value="brushless">Brushless (drone)</option>
+                    </select>
+                    <label>Puissance</label>
+                    <input type="range" min="0" max="100" value="50" class="robot-motor-power" style="width:100%;">
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;">
+                        <span>0%</span><span>50%</span><span>100%</span>
+                    </div>
+                    <label>Direction</label>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="this.parentElement.querySelector('input').value='forward'" style="flex:1;padding:6px;background:#4caf50;border:none;border-radius:4px;cursor:pointer;">⬆️ Avant</button>
+                        <button onclick="this.parentElement.querySelector('input').value='backward'" style="flex:1;padding:6px;background:#f44336;border:none;border-radius:4px;cursor:pointer;">⬇️ Arrière</button>
+                        <input type="hidden" class="robot-motor-direction" value="forward">
+                    </div>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;">Vitesse: 50%</div>
+                </div>
+            `
+        },
+        'robot-sensor-distance': {
+            name: '📏 Capteur Distance',
+            inputs: 0,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #2196f3;">
+                    <label>Type de capteur</label>
+                    <select class="robot-sensor-type">
+                        <option value="ultrasonic">🔊 Ultrason (HC-SR04)</option>
+                        <option value="infrared">🔴 Infrarouge</option>
+                        <option value="lidar">📡 LIDAR</option>
+                        <option value="tof">✨ ToF (VL53L0X)</option>
+                    </select>
+                    <label>Position sur robot</label>
+                    <select class="robot-sensor-position">
+                        <option value="front">Avant</option>
+                        <option value="left">Gauche</option>
+                        <option value="right">Droite</option>
+                        <option value="back">Arrière</option>
+                    </select>
+                    <div class="node-output-preview" data-preview style="margin-top:10px;text-align:center;">
+                        <div style="font-size:24px;">📏</div>
+                        <div style="font-size:18px;color:#2196f3;">-- cm</div>
+                        <div style="font-size:10px;color:#888;">Distance simulée</div>
+                    </div>
+                </div>
+            `
+        },
+        'robot-sensor-camera': {
+            name: '👁️ Caméra Vision',
+            inputs: 0,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #2196f3;">
+                    <label>Résolution</label>
+                    <select class="robot-camera-resolution">
+                        <option value="640x480">640x480 (VGA)</option>
+                        <option value="1280x720">1280x720 (HD)</option>
+                        <option value="1920x1080">1920x1080 (FHD)</option>
+                    </select>
+                    <label>Mode de détection</label>
+                    <select class="robot-camera-mode">
+                        <option value="object">🎯 Détection objets</option>
+                        <option value="face">😊 Reconnaissance visages</option>
+                        <option value="line">➖ Suivi de ligne</option>
+                        <option value="color">🎨 Tracking couleur</option>
+                        <option value="qr">📷 QR Code</option>
+                    </select>
+                    <div class="node-output-preview" data-preview style="margin-top:10px;background:#000;border-radius:8px;height:80px;display:flex;align-items:center;justify-content:center;">
+                        <span style="color:#2196f3;font-size:12px;">📹 Flux vidéo simulé</span>
+                    </div>
+                </div>
+            `
+        },
+        'robot-sensor-imu': {
+            name: '🧭 IMU (Gyroscope)',
+            inputs: 0,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #2196f3;">
+                    <label>Données IMU</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                        <div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;text-align:center;">
+                            <div style="font-size:10px;color:#888;">Roll</div>
+                            <div style="font-size:16px;color:#2196f3;" data-imu-roll>0°</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;text-align:center;">
+                            <div style="font-size:10px;color:#888;">Pitch</div>
+                            <div style="font-size:16px;color:#4caf50;" data-imu-pitch>0°</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;text-align:center;">
+                            <div style="font-size:10px;color:#888;">Yaw</div>
+                            <div style="font-size:16px;color:#ff9800;" data-imu-yaw>0°</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;text-align:center;">
+                            <div style="font-size:10px;color:#888;">Accel</div>
+                            <div style="font-size:16px;color:#e91e63;" data-imu-accel>1.0g</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        'robot-led': {
+            name: '💡 LED',
+            inputs: 1,
+            outputs: 0,
+            html: `
+                <div class="node-content" style="border-left:3px solid #ff9800;">
+                    <label>Couleur LED</label>
+                    <input type="color" value="#00ff00" class="robot-led-color" style="width:100%;height:40px;border:none;border-radius:6px;cursor:pointer;">
+                    <label>Mode</label>
+                    <select class="robot-led-mode">
+                        <option value="solid">Continu</option>
+                        <option value="blink">Clignotant</option>
+                        <option value="pulse">Pulsation</option>
+                        <option value="rainbow">Arc-en-ciel</option>
+                    </select>
+                    <div class="node-output-preview" data-preview style="margin-top:10px;text-align:center;">
+                        <div style="width:30px;height:30px;border-radius:50%;background:#00ff00;margin:auto;box-shadow:0 0 20px #00ff00;"></div>
+                    </div>
+                </div>
+            `
+        },
+        'robot-speaker': {
+            name: '🔊 Haut-parleur',
+            inputs: 1,
+            outputs: 0,
+            html: `
+                <div class="node-content" style="border-left:3px solid #ff9800;">
+                    <label>Mode audio</label>
+                    <select class="robot-speaker-mode">
+                        <option value="tts">🗣️ Text-to-Speech</option>
+                        <option value="beep">🔔 Bip/Sons</option>
+                        <option value="music">🎵 Musique</option>
+                    </select>
+                    <label>Message/Son</label>
+                    <textarea class="robot-speaker-text" rows="2" placeholder="Bonjour, je suis un robot!" style="width:100%;padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;"></textarea>
+                    <button onclick="playRobotSound(this)" style="width:100%;padding:8px;background:#ff9800;border:none;border-radius:6px;cursor:pointer;margin-top:8px;">▶️ Test son</button>
+                </div>
+            `
+        },
+        'robot-gripper': {
+            name: '✋ Pince',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #ff9800;">
+                    <label>Position pince</label>
+                    <input type="range" min="0" max="100" value="0" class="robot-gripper-position" style="width:100%;">
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;">
+                        <span>Ouvert</span><span>Fermé</span>
+                    </div>
+                    <label>Force (g)</label>
+                    <input type="number" value="500" min="0" max="5000" class="robot-gripper-force" style="width:100%;padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;">
+                    <div class="node-output-preview" data-preview style="margin-top:10px;text-align:center;font-size:30px;">
+                        ✋
+                    </div>
+                </div>
+            `
+        },
+        'robot-brain': {
+            name: '🧠 Cerveau IA',
+            inputs: 2,
+            outputs: 2,
+            html: `
+                <div class="node-content" style="border-left:3px solid #9c27b0;">
+                    <label>Modèle IA</label>
+                    <select class="robot-brain-model">
+                        <option value="qwen">Qwen 3 (Local)</option>
+                        <option value="gemma">Gemma 3 (Local)</option>
+                        <option value="gpt4">GPT-4 (Cloud)</option>
+                        <option value="claude">Claude (Cloud)</option>
+                    </select>
+                    <label>Personnalité</label>
+                    <textarea class="robot-brain-personality" rows="2" placeholder="Je suis un robot assistant sympathique..." style="width:100%;padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;"></textarea>
+                    <label>Mémoire</label>
+                    <select class="robot-brain-memory">
+                        <option value="short">Court terme (session)</option>
+                        <option value="long">Long terme (persistant)</option>
+                    </select>
+                    <div style="display:flex;gap:8px;margin-top:8px;font-size:10px;">
+                        <span style="color:#4caf50;">→ Entrée capteurs</span>
+                        <span style="color:#ff9800;">→ Sortie actions</span>
+                    </div>
+                </div>
+            `
+        },
+        'robot-navigation': {
+            name: '🗺️ Navigation',
+            inputs: 2,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #9c27b0;">
+                    <label>Mode de navigation</label>
+                    <select class="robot-nav-mode">
+                        <option value="waypoint">📍 Waypoints</option>
+                        <option value="follow">👤 Suivi personne</option>
+                        <option value="explore">🔍 Exploration</option>
+                        <option value="avoid">🚧 Évitement obstacles</option>
+                        <option value="line">➖ Suivi de ligne</option>
+                    </select>
+                    <label>Vitesse max (cm/s)</label>
+                    <input type="number" value="30" min="1" max="200" class="robot-nav-speed" style="width:100%;padding:6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;">
+                    <div class="node-output-preview" data-preview style="margin-top:10px;background:#000;border-radius:8px;height:60px;position:relative;">
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#4caf50;font-size:20px;">🤖</div>
+                        <div style="position:absolute;top:10px;right:10px;color:#ff9800;font-size:12px;">📍</div>
+                    </div>
+                </div>
+            `
+        },
+        'robot-behavior': {
+            name: '🎭 Comportement',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #9c27b0;">
+                    <label>État émotionnel</label>
+                    <select class="robot-behavior-emotion">
+                        <option value="neutral">😐 Neutre</option>
+                        <option value="happy">😊 Content</option>
+                        <option value="curious">🤔 Curieux</option>
+                        <option value="alert">😮 Alerte</option>
+                        <option value="tired">😴 Fatigué</option>
+                    </select>
+                    <label>Comportement actif</label>
+                    <select class="robot-behavior-action">
+                        <option value="idle">🧍 En attente</option>
+                        <option value="patrol">🚶 Patrouille</option>
+                        <option value="interact">💬 Interaction</option>
+                        <option value="task">⚙️ Tâche</option>
+                    </select>
+                    <div class="node-output-preview" data-preview style="margin-top:10px;text-align:center;">
+                        <div style="font-size:40px;">🤖</div>
+                        <div style="font-size:12px;color:#9c27b0;">État: Neutre</div>
+                    </div>
+                </div>
+            `
+        },
+        'robot-simulator': {
+            name: '🎮 Simulateur',
+            inputs: 3,
+            outputs: 1,
+            html: `
+                <div class="node-content" style="border-left:3px solid #e91e63;">
+                    <label>Environnement</label>
+                    <select class="robot-sim-environment">
+                        <option value="room">🏠 Pièce intérieure</option>
+                        <option value="maze">🔲 Labyrinthe</option>
+                        <option value="outdoor">🌳 Extérieur</option>
+                        <option value="factory">🏭 Usine</option>
+                        <option value="custom">✏️ Personnalisé</option>
+                    </select>
+                    <div class="robot-simulator-canvas" style="width:100%;height:120px;background:#1a1a2e;border-radius:8px;margin-top:10px;position:relative;overflow:hidden;">
+                        <canvas id="robotSimCanvas" style="width:100%;height:100%;"></canvas>
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e91e63;font-size:24px;">🤖</div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <button onclick="startRobotSimulation(this)" style="flex:1;padding:6px;background:#4caf50;border:none;border-radius:4px;cursor:pointer;color:#fff;">▶️ Démarrer</button>
+                        <button onclick="stopRobotSimulation(this)" style="flex:1;padding:6px;background:#f44336;border:none;border-radius:4px;cursor:pointer;color:#fff;">⏹️ Stop</button>
+                    </div>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;font-size:11px;">Simulation prête</div>
+                </div>
+            `
         }
     };
 
@@ -8254,6 +8554,291 @@ async function processNode(node, input, nodeElement) {
         }
 
         return template;
+    }
+
+    // ========== ROBOTICS NODES HANDLERS ==========
+
+    // Robot Chassis Node - defines robot structure
+    if (nodeName.includes('chassis')) {
+        const chassisType = nodeContent?.querySelector('.robot-chassis-type')?.value || 'wheeled';
+        const inputs = nodeContent?.querySelectorAll('input[type="number"]');
+        const dimensions = {
+            length: inputs?.[0]?.value || 20,
+            width: inputs?.[1]?.value || 15,
+            height: inputs?.[2]?.value || 10
+        };
+
+        const robotConfig = {
+            type: chassisType,
+            dimensions: dimensions,
+            sensors: [],
+            actuators: []
+        };
+
+        if (previewElement) {
+            const icons = { wheeled: '🛞', tracked: '🔗', legged: '🦵', drone: '🚁', arm: '🦾' };
+            previewElement.innerHTML = `
+                <div style="font-size:40px;">${icons[chassisType] || '🤖'}</div>
+                <div style="font-size:11px;color:#4caf50;">Robot ${chassisType} configuré</div>
+                <div style="font-size:10px;color:#888;">${dimensions.length}x${dimensions.width}x${dimensions.height} cm</div>
+            `;
+        }
+
+        return robotConfig;
+    }
+
+    // Robot Motor Node - control movement
+    if (nodeName.includes('moteur') && nodeName.includes('⚙️')) {
+        const motorType = nodeContent?.querySelector('.robot-motor-type')?.value || 'dc';
+        const power = parseInt(nodeContent?.querySelector('.robot-motor-power')?.value || 50);
+        const direction = nodeContent?.querySelector('.robot-motor-direction')?.value || 'forward';
+
+        const motorCommand = {
+            type: 'motor',
+            motorType: motorType,
+            power: power,
+            direction: direction
+        };
+
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <div style="color:${direction === 'forward' ? '#4caf50' : '#f44336'};">
+                    ${direction === 'forward' ? '⬆️' : '⬇️'} ${power}%
+                </div>
+            `;
+        }
+
+        return motorCommand;
+    }
+
+    // Robot Distance Sensor Node - simulated readings
+    if (nodeName.includes('capteur') && nodeName.includes('distance')) {
+        const sensorType = nodeContent?.querySelector('.robot-sensor-type')?.value || 'ultrasonic';
+        const position = nodeContent?.querySelector('.robot-sensor-position')?.value || 'front';
+
+        // Simulate distance reading (random between 5-200cm)
+        const simulatedDistance = Math.floor(Math.random() * 195) + 5;
+
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <div style="font-size:24px;">📏</div>
+                <div style="font-size:18px;color:#2196f3;">${simulatedDistance} cm</div>
+                <div style="font-size:10px;color:#888;">${sensorType} - ${position}</div>
+            `;
+        }
+
+        return { type: 'distance', value: simulatedDistance, position: position, sensor: sensorType };
+    }
+
+    // Robot Camera Node - vision simulation
+    if (nodeName.includes('caméra') || nodeName.includes('camera')) {
+        const mode = nodeContent?.querySelector('.robot-camera-mode')?.value || 'object';
+        const resolution = nodeContent?.querySelector('.robot-camera-resolution')?.value || '640x480';
+
+        // Simulate detection based on mode
+        let detection;
+        switch (mode) {
+            case 'object': detection = { objects: ['person', 'chair', 'table'], count: 3 }; break;
+            case 'face': detection = { faces: 1, emotions: ['neutral'] }; break;
+            case 'line': detection = { linePosition: 50, angle: 0 }; break;
+            case 'color': detection = { dominantColor: '#FF5722', position: { x: 320, y: 240 } }; break;
+            case 'qr': detection = { qrCode: 'https://example.com', valid: true }; break;
+        }
+
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <div style="padding:10px;font-size:11px;color:#2196f3;">
+                    📹 Mode: ${mode}<br>
+                    Détecté: ${JSON.stringify(detection).substring(0, 40)}...
+                </div>
+            `;
+        }
+
+        return { type: 'camera', mode: mode, resolution: resolution, detection: detection };
+    }
+
+    // Robot IMU Node - orientation data
+    if (nodeName.includes('imu') || nodeName.includes('gyro')) {
+        // Simulate IMU readings
+        const imuData = {
+            roll: Math.floor(Math.random() * 20) - 10,
+            pitch: Math.floor(Math.random() * 20) - 10,
+            yaw: Math.floor(Math.random() * 360),
+            accel: (0.9 + Math.random() * 0.2).toFixed(2)
+        };
+
+        // Update display
+        const rollEl = nodeContent?.querySelector('[data-imu-roll]');
+        const pitchEl = nodeContent?.querySelector('[data-imu-pitch]');
+        const yawEl = nodeContent?.querySelector('[data-imu-yaw]');
+        const accelEl = nodeContent?.querySelector('[data-imu-accel]');
+
+        if (rollEl) rollEl.textContent = `${imuData.roll}°`;
+        if (pitchEl) pitchEl.textContent = `${imuData.pitch}°`;
+        if (yawEl) yawEl.textContent = `${imuData.yaw}°`;
+        if (accelEl) accelEl.textContent = `${imuData.accel}g`;
+
+        return { type: 'imu', ...imuData };
+    }
+
+    // Robot LED Node - visual output
+    if (nodeName.includes('led') && nodeName.includes('💡')) {
+        const color = nodeContent?.querySelector('.robot-led-color')?.value || '#00ff00';
+        const mode = nodeContent?.querySelector('.robot-led-mode')?.value || 'solid';
+
+        if (previewElement) {
+            const ledStyle = mode === 'blink' ? 'animation:blink 0.5s infinite;' : '';
+            previewElement.innerHTML = `
+                <div style="width:30px;height:30px;border-radius:50%;background:${color};margin:auto;box-shadow:0 0 20px ${color};${ledStyle}"></div>
+            `;
+        }
+
+        return { type: 'led', color: color, mode: mode };
+    }
+
+    // Robot Speaker Node - audio output
+    if (nodeName.includes('haut-parleur') || nodeName.includes('speaker')) {
+        const mode = nodeContent?.querySelector('.robot-speaker-mode')?.value || 'tts';
+        const text = nodeContent?.querySelector('.robot-speaker-text')?.value || input || 'Bonjour!';
+
+        // If TTS mode and we have text, speak it
+        if (mode === 'tts' && text) {
+            speakText(text);
+        }
+
+        return { type: 'speaker', mode: mode, text: text };
+    }
+
+    // Robot Gripper Node - mechanical control
+    if (nodeName.includes('pince') || nodeName.includes('gripper')) {
+        const position = parseInt(nodeContent?.querySelector('.robot-gripper-position')?.value || 0);
+        const force = parseInt(nodeContent?.querySelector('.robot-gripper-force')?.value || 500);
+
+        if (previewElement) {
+            const icon = position > 50 ? '✊' : '✋';
+            previewElement.innerHTML = `
+                <div style="font-size:30px;">${icon}</div>
+                <div style="font-size:10px;color:#888;">${position}% fermé, ${force}g</div>
+            `;
+        }
+
+        return { type: 'gripper', position: position, force: force };
+    }
+
+    // Robot Brain Node - AI decision making
+    if (nodeName.includes('cerveau') || (nodeName.includes('brain') && nodeName.includes('🧠'))) {
+        const model = nodeContent?.querySelector('.robot-brain-model')?.value || 'qwen';
+        const personality = nodeContent?.querySelector('.robot-brain-personality')?.value || '';
+        const memory = nodeContent?.querySelector('.robot-brain-memory')?.value || 'short';
+
+        // Process input through AI
+        let decision = 'Aucune action';
+
+        if (input) {
+            // Build context from sensors
+            const sensorContext = typeof input === 'object' ? JSON.stringify(input) : String(input);
+
+            try {
+                const response = await fetch('/api/chat/smart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model === 'qwen' ? 'qwen3:32b' : 'gemma3:27b',
+                        message: `${personality ? 'Tu es: ' + personality + '. ' : ''}
+                        En tant que cerveau de robot, analyse ces données capteurs et décide l'action à effectuer.
+                        Données: ${sensorContext}
+                        Réponds uniquement avec l'action (ex: "avancer", "tourner gauche", "s'arrêter", "parler: bonjour").`,
+                        stream: false
+                    })
+                });
+
+                const data = await response.json();
+                decision = data.message || data.response || 'Attendre';
+            } catch (e) {
+                decision = 'Erreur IA: ' + e.message;
+            }
+        }
+
+        return { type: 'brain', model: model, decision: decision, input: input };
+    }
+
+    // Robot Navigation Node - pathfinding
+    if (nodeName.includes('navigation') || nodeName.includes('🗺️')) {
+        const mode = nodeContent?.querySelector('.robot-nav-mode')?.value || 'avoid';
+        const maxSpeed = parseInt(nodeContent?.querySelector('.robot-nav-speed')?.value || 30);
+
+        // Process navigation based on sensor input
+        let navCommand = { action: 'stop', speed: 0 };
+
+        if (input && typeof input === 'object') {
+            const distance = input.value || 100;
+
+            if (mode === 'avoid') {
+                if (distance > 50) {
+                    navCommand = { action: 'forward', speed: maxSpeed };
+                } else if (distance > 20) {
+                    navCommand = { action: 'slow', speed: maxSpeed * 0.5 };
+                } else {
+                    navCommand = { action: 'turn', speed: 0, direction: 'left' };
+                }
+            } else if (mode === 'line') {
+                const linePos = input.linePosition || 50;
+                if (linePos < 40) navCommand = { action: 'turn', direction: 'left', speed: maxSpeed * 0.7 };
+                else if (linePos > 60) navCommand = { action: 'turn', direction: 'right', speed: maxSpeed * 0.7 };
+                else navCommand = { action: 'forward', speed: maxSpeed };
+            }
+        }
+
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <div style="position:relative;height:60px;background:#000;border-radius:8px;">
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#4caf50;font-size:20px;">🤖</div>
+                    <div style="position:absolute;bottom:5px;left:5px;color:#888;font-size:10px;">${navCommand.action} ${navCommand.speed}cm/s</div>
+                </div>
+            `;
+        }
+
+        return { type: 'navigation', mode: mode, command: navCommand };
+    }
+
+    // Robot Behavior Node - emotional state machine
+    if (nodeName.includes('comportement') || nodeName.includes('behavior')) {
+        const emotion = nodeContent?.querySelector('.robot-behavior-emotion')?.value || 'neutral';
+        const action = nodeContent?.querySelector('.robot-behavior-action')?.value || 'idle';
+
+        const emotionIcons = { neutral: '😐', happy: '😊', curious: '🤔', alert: '😮', tired: '😴' };
+
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <div style="font-size:40px;">${emotionIcons[emotion] || '🤖'}</div>
+                <div style="font-size:12px;color:#9c27b0;">État: ${emotion} - ${action}</div>
+            `;
+        }
+
+        return { type: 'behavior', emotion: emotion, action: action };
+    }
+
+    // Robot Simulator Node - 2D simulation
+    if (nodeName.includes('simulateur') || nodeName.includes('simulator')) {
+        const environment = nodeContent?.querySelector('.robot-sim-environment')?.value || 'room';
+
+        // Build robot state from inputs
+        const robotState = {
+            position: { x: 100, y: 60 },
+            angle: 0,
+            environment: environment,
+            sensors: input || {}
+        };
+
+        // Update simulation display
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <div style="color:#4caf50;">▶️ Simulation ${environment}</div>
+                <div style="font-size:10px;color:#888;">Robot à (${robotState.position.x}, ${robotState.position.y})</div>
+            `;
+        }
+
+        return robotState;
     }
 
     // Default: pass through
