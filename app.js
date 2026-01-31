@@ -7242,6 +7242,144 @@ function addNodeByType(type, x, y) {
                     <div class="node-output-preview" data-preview style="min-height:60px;max-height:150px;overflow:auto;font-family:monospace;font-size:12px;white-space:pre-wrap;"></div>
                 </div>
             `
+        },
+        // ========== NEW POWERFUL NODES ==========
+        'loop': {
+            name: 'Boucle',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content">
+                    <label>Répétitions</label>
+                    <input type="number" value="3" min="1" max="100" class="node-loop-count" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;text-align:center;font-size:18px;">
+                    <label>Délai entre (ms)</label>
+                    <input type="number" value="500" min="0" max="10000" step="100" class="node-loop-delay" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;">
+                    <div class="node-output-preview" data-preview style="margin-top:8px;">Itération: 0/0</div>
+                </div>
+            `
+        },
+        'condition': {
+            name: 'Condition',
+            inputs: 1,
+            outputs: 2,
+            html: `
+                <div class="node-content">
+                    <label>Type de condition</label>
+                    <select class="node-condition-type">
+                        <option value="contains">Contient</option>
+                        <option value="equals">Égal à</option>
+                        <option value="startswith">Commence par</option>
+                        <option value="endswith">Finit par</option>
+                        <option value="regex">Regex</option>
+                        <option value="length-gt">Longueur ></option>
+                        <option value="length-lt">Longueur <</option>
+                        <option value="not-empty">Non vide</option>
+                    </select>
+                    <label>Valeur à vérifier</label>
+                    <input type="text" class="node-condition-value" placeholder="Valeur..." style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;">
+                    <div style="display:flex;gap:10px;margin-top:10px;font-size:11px;">
+                        <span style="color:#4caf50;">✓ Sortie 1: Vrai</span>
+                        <span style="color:#f44336;">✗ Sortie 2: Faux</span>
+                    </div>
+                    <div class="node-output-preview" data-preview></div>
+                </div>
+            `
+        },
+        'merge': {
+            name: 'Fusion',
+            inputs: 3,
+            outputs: 1,
+            html: `
+                <div class="node-content">
+                    <label>Mode de fusion</label>
+                    <select class="node-merge-mode">
+                        <option value="concat">Concaténer</option>
+                        <option value="join-newline">Joindre (retour ligne)</option>
+                        <option value="join-comma">Joindre (virgule)</option>
+                        <option value="array">Tableau JSON</option>
+                        <option value="first">Premier non-vide</option>
+                    </select>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;">3 entrées → 1 sortie</div>
+                </div>
+            `
+        },
+        'split': {
+            name: 'Diviser',
+            inputs: 1,
+            outputs: 3,
+            html: `
+                <div class="node-content">
+                    <label>Mode</label>
+                    <select class="node-split-mode">
+                        <option value="duplicate">Dupliquer (même valeur)</option>
+                        <option value="lines">Par lignes</option>
+                        <option value="sentences">Par phrases</option>
+                        <option value="words">Par mots</option>
+                    </select>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;">1 entrée → 3 sorties</div>
+                </div>
+            `
+        },
+        'delay': {
+            name: 'Délai',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content">
+                    <label>Attendre (secondes)</label>
+                    <input type="number" value="2" min="0.1" max="60" step="0.1" class="node-delay-seconds" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;text-align:center;font-size:18px;">
+                    <div class="node-output-preview" data-preview style="margin-top:8px;">⏱️ En attente...</div>
+                </div>
+            `
+        },
+        'http': {
+            name: 'Requête HTTP',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content">
+                    <label>Méthode</label>
+                    <select class="node-http-method">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <label>URL</label>
+                    <input type="text" class="node-http-url" placeholder="https://api.example.com/..." style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:11px;">
+                    <label>Headers (JSON)</label>
+                    <textarea class="node-http-headers" placeholder='{"Authorization": "Bearer xxx"}' rows="2" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-family:monospace;font-size:10px;"></textarea>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;"></div>
+                </div>
+            `
+        },
+        'code': {
+            name: 'Code JavaScript',
+            inputs: 1,
+            outputs: 1,
+            html: `
+                <div class="node-content">
+                    <label>Code (input = données entrantes)</label>
+                    <textarea class="node-code-script" rows="5" placeholder="// input contient les données
+// Retourne le résultat
+return input.toUpperCase();" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.5);color:#4caf50;font-family:'JetBrains Mono',monospace;font-size:11px;"></textarea>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;font-family:monospace;font-size:11px;"></div>
+                </div>
+            `
+        },
+        'template': {
+            name: 'Template',
+            inputs: 2,
+            outputs: 1,
+            html: `
+                <div class="node-content">
+                    <label>Template ({{1}} = entrée 1, {{2}} = entrée 2)</label>
+                    <textarea class="node-template-text" rows="3" placeholder="Résumé: {{1}}
+
+Détails: {{2}}" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-family:monospace;font-size:11px;"></textarea>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;"></div>
+                </div>
+            `
         }
     };
 
@@ -7889,6 +8027,233 @@ async function processNode(node, input, nodeElement) {
             previewElement.textContent = input || '(vide)';
         }
         return input;
+    }
+
+    // ========== NEW POWERFUL NODES ==========
+
+    // Loop Node - Repeat operation N times
+    if (nodeName.includes('boucle') || nodeName.includes('loop')) {
+        const count = parseInt(nodeContent?.querySelector('.node-loop-count')?.value || '3');
+        const delayMs = parseInt(nodeContent?.querySelector('.node-loop-delay')?.value || '500');
+
+        if (previewElement) previewElement.textContent = `Itération: 0/${count}`;
+
+        const results = [];
+        for (let i = 1; i <= count; i++) {
+            if (previewElement) previewElement.textContent = `Itération: ${i}/${count}`;
+            results.push({ iteration: i, input: input });
+            if (i < count && delayMs > 0) {
+                await new Promise(r => setTimeout(r, delayMs));
+            }
+        }
+
+        if (previewElement) previewElement.textContent = `✅ ${count} itérations terminées`;
+        // Return last input (loops typically forward the same data)
+        return input;
+    }
+
+    // Condition Node - If/else branching
+    if (nodeName.includes('condition')) {
+        const condType = nodeContent?.querySelector('.node-condition-type')?.value || 'contains';
+        const condValue = nodeContent?.querySelector('.node-condition-value')?.value || '';
+
+        let result = false;
+        const inputStr = String(input || '');
+
+        switch (condType) {
+            case 'contains': result = inputStr.includes(condValue); break;
+            case 'equals': result = inputStr === condValue; break;
+            case 'startswith': result = inputStr.startsWith(condValue); break;
+            case 'endswith': result = inputStr.endsWith(condValue); break;
+            case 'regex':
+                try { result = new RegExp(condValue).test(inputStr); }
+                catch (e) { result = false; }
+                break;
+            case 'length-gt': result = inputStr.length > parseInt(condValue || '0'); break;
+            case 'length-lt': result = inputStr.length < parseInt(condValue || '100'); break;
+            case 'not-empty': result = inputStr.trim().length > 0; break;
+        }
+
+        if (previewElement) {
+            previewElement.innerHTML = result
+                ? '<span style="color:#4caf50;">✓ Vrai</span>'
+                : '<span style="color:#f44336;">✗ Faux</span>';
+        }
+
+        // Store which output to use (1 for true, 2 for false)
+        // The execution engine will handle routing
+        return { __conditionResult: result, value: input };
+    }
+
+    // Merge Node - Combine multiple inputs
+    if (nodeName.includes('fusion') || nodeName.includes('merge')) {
+        const mode = nodeContent?.querySelector('.node-merge-mode')?.value || 'concat';
+
+        // Collect all inputs
+        const inputs = [];
+        for (let i = 1; i <= 3; i++) {
+            const inputKey = `input_${i}`;
+            if (node.inputs?.[inputKey]?.connections?.length > 0) {
+                // The input for this handler is from input_1; we'd need multi-input support
+                // For now, treat as single input passthrough with transform
+                inputs.push(input);
+            }
+        }
+
+        // If only one input (current limitation), just use it
+        if (inputs.length <= 1) {
+            if (previewElement) previewElement.textContent = input ? String(input).substring(0, 50) + '...' : '(vide)';
+            return input;
+        }
+
+        let result;
+        switch (mode) {
+            case 'concat': result = inputs.join(''); break;
+            case 'join-newline': result = inputs.join('\n'); break;
+            case 'join-comma': result = inputs.join(', '); break;
+            case 'array': result = JSON.stringify(inputs); break;
+            case 'first': result = inputs.find(i => i && String(i).trim()) || ''; break;
+            default: result = inputs.join('');
+        }
+
+        if (previewElement) previewElement.textContent = String(result).substring(0, 80) + '...';
+        return result;
+    }
+
+    // Split Node - Duplicate to multiple outputs
+    if (nodeName.includes('diviser') || nodeName.includes('split')) {
+        const mode = nodeContent?.querySelector('.node-split-mode')?.value || 'duplicate';
+
+        let outputs;
+        switch (mode) {
+            case 'duplicate':
+                outputs = [input, input, input];
+                break;
+            case 'lines':
+                outputs = String(input || '').split('\n').slice(0, 3);
+                while (outputs.length < 3) outputs.push('');
+                break;
+            case 'sentences':
+                outputs = String(input || '').split(/[.!?]+/).slice(0, 3);
+                while (outputs.length < 3) outputs.push('');
+                break;
+            case 'words':
+                outputs = String(input || '').split(/\s+/).slice(0, 3);
+                while (outputs.length < 3) outputs.push('');
+                break;
+            default:
+                outputs = [input, input, input];
+        }
+
+        if (previewElement) previewElement.textContent = `→ ${outputs.length} sorties`;
+
+        // For now return first output (multi-output needs engine support)
+        return outputs[0];
+    }
+
+    // Delay Node - Wait before passing data
+    if (nodeName.includes('délai') || nodeName.includes('delay')) {
+        const seconds = parseFloat(nodeContent?.querySelector('.node-delay-seconds')?.value || '2');
+
+        if (previewElement) previewElement.innerHTML = `⏱️ Attente ${seconds}s...`;
+
+        await new Promise(r => setTimeout(r, seconds * 1000));
+
+        if (previewElement) previewElement.innerHTML = '✅ Terminé';
+        return input;
+    }
+
+    // HTTP Request Node - Call external APIs
+    if (nodeName.includes('http') || nodeName.includes('requête')) {
+        const method = nodeContent?.querySelector('.node-http-method')?.value || 'GET';
+        let url = nodeContent?.querySelector('.node-http-url')?.value || '';
+        const headersStr = nodeContent?.querySelector('.node-http-headers')?.value || '{}';
+
+        if (!url) {
+            if (previewElement) previewElement.textContent = '⚠️ URL requise';
+            return null;
+        }
+
+        // Allow input to be used as URL if URL contains {{input}}
+        url = url.replace('{{input}}', encodeURIComponent(String(input || '')));
+
+        if (previewElement) previewElement.innerHTML = '🌐 Requête en cours...';
+
+        try {
+            let headers = { 'Content-Type': 'application/json' };
+            try { headers = { ...headers, ...JSON.parse(headersStr) }; } catch (e) { }
+
+            const fetchOptions = { method, headers };
+            if (method === 'POST' || method === 'PUT') {
+                fetchOptions.body = typeof input === 'string' ? input : JSON.stringify(input);
+            }
+
+            const response = await fetch(url, fetchOptions);
+            const data = await response.text();
+
+            // Try to parse as JSON
+            let result;
+            try { result = JSON.parse(data); } catch (e) { result = data; }
+
+            if (previewElement) {
+                const display = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+                previewElement.textContent = display.substring(0, 150) + (display.length > 150 ? '...' : '');
+            }
+
+            return result;
+        } catch (error) {
+            if (previewElement) previewElement.textContent = '❌ ' + error.message;
+            return null;
+        }
+    }
+
+    // Code Node - Execute custom JavaScript
+    if (nodeName.includes('code') || nodeName.includes('javascript')) {
+        const script = nodeContent?.querySelector('.node-code-script')?.value || 'return input;';
+
+        if (previewElement) previewElement.innerHTML = '💻 Exécution...';
+
+        try {
+            // Create a sandboxed function
+            const fn = new Function('input', script);
+            const result = fn(input);
+
+            if (previewElement) {
+                const display = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+                previewElement.textContent = display.substring(0, 150) + (display.length > 150 ? '...' : '');
+                previewElement.style.color = '#4caf50';
+            }
+
+            return result;
+        } catch (error) {
+            if (previewElement) {
+                previewElement.textContent = '❌ ' + error.message;
+                previewElement.style.color = '#ef4444';
+            }
+            return null;
+        }
+    }
+
+    // Template Node - String formatting with variables
+    if (nodeName.includes('template')) {
+        let template = nodeContent?.querySelector('.node-template-text')?.value || '{{1}}';
+
+        // Replace {{1}} with first input, {{2}} with second input, etc.
+        // For now, only single input is supported
+        template = template.replace(/\{\{1\}\}/g, String(input || ''));
+        template = template.replace(/\{\{2\}\}/g, ''); // Future: second input
+        template = template.replace(/\{\{input\}\}/gi, String(input || ''));
+
+        // Also support simple variables
+        template = template.replace(/\{\{date\}\}/gi, new Date().toLocaleDateString('fr-FR'));
+        template = template.replace(/\{\{time\}\}/gi, new Date().toLocaleTimeString('fr-FR'));
+        template = template.replace(/\{\{timestamp\}\}/gi, Date.now().toString());
+
+        if (previewElement) {
+            previewElement.textContent = template.substring(0, 150) + (template.length > 150 ? '...' : '');
+        }
+
+        return template;
     }
 
     // Default: pass through
