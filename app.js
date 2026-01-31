@@ -7660,24 +7660,37 @@ Détails: {{2}}" style="width:100%;padding:8px;border-radius:6px;border:1px soli
             inputs: 3,
             outputs: 1,
             html: `
-                <div class="node-content" style="border-left:3px solid #e91e63;">
+                <div class="node-content" style="border-left:3px solid #e91e63;min-width:280px;">
                     <label>Environnement</label>
-                    <select class="robot-sim-environment">
+                    <select class="robot-sim-environment" onchange="updateSimEnvironment(this)">
                         <option value="room">🏠 Pièce intérieure</option>
                         <option value="maze">🔲 Labyrinthe</option>
                         <option value="outdoor">🌳 Extérieur</option>
                         <option value="factory">🏭 Usine</option>
                         <option value="custom">✏️ Personnalisé</option>
                     </select>
-                    <div class="robot-simulator-canvas" style="width:100%;height:120px;background:#1a1a2e;border-radius:8px;margin-top:10px;position:relative;overflow:hidden;">
-                        <canvas id="robotSimCanvas" style="width:100%;height:100%;"></canvas>
+                    <label>Dimensions (pixels)</label>
+                    <div style="display:flex;gap:8px;margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <span style="font-size:10px;color:#888;">Largeur</span>
+                            <input type="number" class="robot-sim-width" value="400" min="200" max="1200" style="width:100%;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#fff;" onchange="resizeSimCanvas(this)">
+                        </div>
+                        <div style="flex:1;">
+                            <span style="font-size:10px;color:#888;">Hauteur</span>
+                            <input type="number" class="robot-sim-height" value="300" min="150" max="800" style="width:100%;padding:4px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:4px;color:#fff;" onchange="resizeSimCanvas(this)">
+                        </div>
+                    </div>
+                    <div class="robot-simulator-canvas" style="width:100%;height:200px;background:#1a1a2e;border-radius:8px;position:relative;overflow:hidden;resize:both;min-width:200px;min-height:150px;">
+                        <canvas class="robot-canvas" style="width:100%;height:100%;"></canvas>
                         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e91e63;font-size:24px;">🤖</div>
+                        <div style="position:absolute;bottom:5px;right:5px;font-size:10px;color:#666;">↘ Redimensionner</div>
                     </div>
-                    <div style="display:flex;gap:8px;margin-top:10px;">
-                        <button onclick="startRobotSimulation(this)" style="flex:1;padding:6px;background:#4caf50;border:none;border-radius:4px;cursor:pointer;color:#fff;">▶️ Démarrer</button>
-                        <button onclick="stopRobotSimulation(this)" style="flex:1;padding:6px;background:#f44336;border:none;border-radius:4px;cursor:pointer;color:#fff;">⏹️ Stop</button>
+                    <div style="display:flex;gap:6px;margin-top:10px;">
+                        <button onclick="startRobotSimulation(this)" style="flex:1;padding:8px;background:#4caf50;border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:bold;">▶️ Démarrer</button>
+                        <button onclick="stopRobotSimulation(this)" style="flex:1;padding:8px;background:#f44336;border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:bold;">⏹️ Stop</button>
+                        <button onclick="openRobotSimulatorFullscreen()" style="padding:8px 12px;background:#9c27b0;border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:bold;" title="Plein écran">⛶</button>
                     </div>
-                    <div class="node-output-preview" data-preview style="margin-top:8px;font-size:11px;">Simulation prête</div>
+                    <div class="node-output-preview" data-preview style="margin-top:8px;font-size:11px;">Simulation prête - Cliquez Démarrer</div>
                 </div>
             `
         }
@@ -9457,3 +9470,188 @@ function updateFullscreenSimulation() {
         `;
     }
 }
+
+/**
+ * Resize simulation canvas based on input values
+ */
+function resizeSimCanvas(input) {
+    const nodeContent = input.closest('.node-content');
+    if (!nodeContent) return;
+
+    const width = parseInt(nodeContent.querySelector('.robot-sim-width')?.value || 400);
+    const height = parseInt(nodeContent.querySelector('.robot-sim-height')?.value || 300);
+
+    const container = nodeContent.querySelector('.robot-simulator-canvas');
+    if (container) {
+        container.style.width = width + 'px';
+        container.style.height = height + 'px';
+
+        // Update canvas if simulation is running
+        const canvas = container.querySelector('canvas');
+        if (canvas && robotSimulation.active) {
+            canvas.width = width;
+            canvas.height = height;
+            robotSimulation.canvas = canvas;
+
+            // Re-setup environment with new dimensions
+            const envType = nodeContent.querySelector('.robot-sim-environment')?.value || 'room';
+            setupEnvironmentScaled(envType, width, height);
+        }
+    }
+
+    showNotification(`📐 Canvas: ${width}×${height}px`, 'info');
+}
+
+/**
+ * Update simulation environment type
+ */
+function updateSimEnvironment(select) {
+    const nodeContent = select.closest('.node-content');
+    if (!nodeContent) return;
+
+    const envType = select.value;
+    const width = parseInt(nodeContent.querySelector('.robot-sim-width')?.value || 400);
+    const height = parseInt(nodeContent.querySelector('.robot-sim-height')?.value || 300);
+
+    if (robotSimulation.active) {
+        setupEnvironmentScaled(envType, width, height);
+        showNotification(`🏠 Environnement: ${envType}`, 'info');
+    }
+}
+
+/**
+ * Setup environment with scaled obstacles based on canvas size
+ */
+function setupEnvironmentScaled(type, width, height) {
+    const env = robotSimulation.environment;
+    env.width = width;
+    env.height = height;
+    env.obstacles = [];
+
+    // Scale factors based on reference size (300x200)
+    const scaleX = width / 300;
+    const scaleY = height / 200;
+
+    switch (type) {
+        case 'room':
+            // Furniture-like obstacles (scaled)
+            env.obstacles.push(
+                { x: 100 * scaleX, y: 30 * scaleY, w: 50 * scaleX, h: 40 * scaleY, color: '#8B4513' },
+                { x: 200 * scaleX, y: 100 * scaleY, w: 60 * scaleX, h: 35 * scaleY, color: '#A0522D' },
+                { x: 50 * scaleX, y: 120 * scaleY, w: 40 * scaleX, h: 30 * scaleY, color: '#654321' }
+            );
+            break;
+        case 'maze':
+            // Maze walls (scaled)
+            const wallW = 12 * scaleX;
+            env.obstacles.push(
+                { x: 60 * scaleX, y: 0, w: wallW, h: 80 * scaleY, color: '#444' },
+                { x: 120 * scaleX, y: 60 * scaleY, w: wallW, h: 140 * scaleY, color: '#444' },
+                { x: 180 * scaleX, y: 0, w: wallW, h: 100 * scaleY, color: '#444' },
+                { x: 240 * scaleX, y: 50 * scaleY, w: wallW, h: 150 * scaleY, color: '#444' },
+                { x: 0, y: 100 * scaleY, w: 40 * scaleX, h: wallW, color: '#444' }
+            );
+            break;
+        case 'outdoor':
+            // Trees and rocks (scaled, multiple)
+            for (let i = 0; i < 5; i++) {
+                const treeSize = (20 + Math.random() * 20) * Math.min(scaleX, scaleY);
+                env.obstacles.push({
+                    x: 30 + Math.random() * (width - 60),
+                    y: 30 + Math.random() * (height - 60),
+                    w: treeSize,
+                    h: treeSize,
+                    color: '#228B22',
+                    round: true
+                });
+            }
+            // Add some rocks
+            for (let i = 0; i < 3; i++) {
+                const rockSize = (10 + Math.random() * 15) * Math.min(scaleX, scaleY);
+                env.obstacles.push({
+                    x: 30 + Math.random() * (width - 60),
+                    y: 30 + Math.random() * (height - 60),
+                    w: rockSize,
+                    h: rockSize,
+                    color: '#696969',
+                    round: true
+                });
+            }
+            break;
+        case 'factory':
+            // Industrial obstacles (scaled)
+            env.obstacles.push(
+                { x: 70 * scaleX, y: 20 * scaleY, w: 40 * scaleX, h: 80 * scaleY, color: '#FFD700' },
+                { x: 150 * scaleX, y: 60 * scaleY, w: 50 * scaleX, h: 50 * scaleY, color: '#FF6347' },
+                { x: 230 * scaleX, y: 20 * scaleY, w: 45 * scaleX, h: 100 * scaleY, color: '#4169E1' },
+                { x: 100 * scaleX, y: 140 * scaleY, w: 80 * scaleX, h: 30 * scaleY, color: '#CD853F' }
+            );
+            break;
+        case 'custom':
+            // Empty - user can add obstacles later
+            break;
+    }
+
+    // Reset robot position based on new size
+    robotSimulation.robot.x = 40;
+    robotSimulation.robot.y = height / 2;
+}
+
+/**
+ * Enhanced start simulation with custom dimensions
+ */
+const originalStartRobotSimulation = startRobotSimulation;
+startRobotSimulation = function (btn) {
+    const container = btn.closest('.node-content').querySelector('.robot-simulator-canvas');
+    if (!container) return;
+
+    // Get custom dimensions
+    const nodeContent = btn.closest('.node-content');
+    const width = parseInt(nodeContent?.querySelector('.robot-sim-width')?.value || container.offsetWidth || 400);
+    const height = parseInt(nodeContent?.querySelector('.robot-sim-height')?.value || container.offsetHeight || 300);
+
+    // Set container size
+    container.style.width = width + 'px';
+    container.style.height = height + 'px';
+
+    // Create or get canvas
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        container.innerHTML = '';
+        container.appendChild(canvas);
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+
+    robotSimulation.canvas = canvas;
+    robotSimulation.ctx = canvas.getContext('2d');
+    robotSimulation.active = true;
+
+    // Get environment type
+    const envSelect = nodeContent?.querySelector('.robot-sim-environment');
+    const envType = envSelect?.value || 'room';
+
+    // Setup environment with proper scaling
+    setupEnvironmentScaled(envType, width, height);
+
+    // Reset robot position
+    robotSimulation.robot.x = 40;
+    robotSimulation.robot.y = height / 2;
+    robotSimulation.robot.angle = 0;
+    robotSimulation.robot.speed = 2;
+    robotSimulation.robot.size = Math.min(width, height) / 15; // Scale robot size
+
+    // Start animation loop
+    if (robotSimulation.interval) clearInterval(robotSimulation.interval);
+    robotSimulation.interval = setInterval(() => updateRobotSimulation(btn), 50);
+
+    // Update preview
+    const preview = nodeContent?.querySelector('[data-preview]');
+    if (preview) preview.innerHTML = `<span style="color:#4caf50;">▶️ Simulation ${width}×${height} en cours...</span>`;
+
+    showNotification(`🤖 Simulation ${width}×${height} démarrée!`, 'success');
+};
