@@ -8888,3 +8888,572 @@ function handleNodeVideoUpload(input) {
     };
     reader.readAsDataURL(file);
 }
+
+// ========== ROBOT SIMULATION ENGINE ==========
+
+/**
+ * Robot Simulation State
+ */
+const robotSimulation = {
+    active: false,
+    canvas: null,
+    ctx: null,
+    robot: {
+        x: 150,
+        y: 100,
+        angle: 0,
+        speed: 0,
+        size: 20,
+        sensors: {
+            front: 200,
+            left: 200,
+            right: 200
+        }
+    },
+    environment: {
+        width: 300,
+        height: 200,
+        obstacles: [],
+        walls: true
+    },
+    interval: null
+};
+
+/**
+ * Start robot simulation
+ */
+function startRobotSimulation(btn) {
+    const container = btn.closest('.node-content').querySelector('.robot-simulator-canvas');
+    if (!container) return;
+
+    // Create or get canvas
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.width = container.offsetWidth || 280;
+        canvas.height = container.offsetHeight || 120;
+        container.innerHTML = '';
+        container.appendChild(canvas);
+    }
+
+    robotSimulation.canvas = canvas;
+    robotSimulation.ctx = canvas.getContext('2d');
+    robotSimulation.active = true;
+
+    // Get environment type
+    const envSelect = btn.closest('.node-content').querySelector('.robot-sim-environment');
+    const envType = envSelect?.value || 'room';
+
+    // Setup environment based on type
+    setupEnvironment(envType);
+
+    // Reset robot position
+    robotSimulation.robot.x = 40;
+    robotSimulation.robot.y = canvas.height / 2;
+    robotSimulation.robot.angle = 0;
+    robotSimulation.robot.speed = 2;
+
+    // Start animation loop
+    if (robotSimulation.interval) clearInterval(robotSimulation.interval);
+    robotSimulation.interval = setInterval(() => updateRobotSimulation(btn), 50);
+
+    // Update preview
+    const preview = btn.closest('.node-content').querySelector('[data-preview]');
+    if (preview) preview.innerHTML = '<span style="color:#4caf50;">▶️ Simulation en cours...</span>';
+
+    showNotification('🤖 Simulation démarrée!', 'success');
+}
+
+/**
+ * Stop robot simulation
+ */
+function stopRobotSimulation(btn) {
+    robotSimulation.active = false;
+    if (robotSimulation.interval) {
+        clearInterval(robotSimulation.interval);
+        robotSimulation.interval = null;
+    }
+
+    const preview = btn?.closest('.node-content')?.querySelector('[data-preview]');
+    if (preview) preview.innerHTML = '<span style="color:#f44336;">⏹️ Simulation arrêtée</span>';
+
+    showNotification('🤖 Simulation arrêtée', 'info');
+}
+
+/**
+ * Setup environment obstacles
+ */
+function setupEnvironment(type) {
+    const env = robotSimulation.environment;
+    const canvas = robotSimulation.canvas;
+    env.width = canvas?.width || 280;
+    env.height = canvas?.height || 120;
+    env.obstacles = [];
+
+    switch (type) {
+        case 'room':
+            // Furniture-like obstacles
+            env.obstacles.push(
+                { x: 100, y: 30, w: 40, h: 30, color: '#8B4513' },
+                { x: 200, y: 70, w: 50, h: 25, color: '#A0522D' }
+            );
+            break;
+        case 'maze':
+            // Maze walls
+            env.obstacles.push(
+                { x: 60, y: 0, w: 10, h: 70, color: '#444' },
+                { x: 120, y: 50, w: 10, h: 70, color: '#444' },
+                { x: 180, y: 0, w: 10, h: 80, color: '#444' },
+                { x: 240, y: 40, w: 10, h: 80, color: '#444' }
+            );
+            break;
+        case 'outdoor':
+            // Trees and rocks
+            env.obstacles.push(
+                { x: 80, y: 20, w: 25, h: 25, color: '#228B22', round: true },
+                { x: 160, y: 80, w: 20, h: 20, color: '#228B22', round: true },
+                { x: 220, y: 40, w: 15, h: 15, color: '#696969', round: true }
+            );
+            break;
+        case 'factory':
+            // Industrial obstacles
+            env.obstacles.push(
+                { x: 70, y: 20, w: 30, h: 60, color: '#FFD700' },
+                { x: 150, y: 40, w: 40, h: 40, color: '#FF6347' },
+                { x: 230, y: 10, w: 35, h: 80, color: '#4169E1' }
+            );
+            break;
+    }
+}
+
+/**
+ * Update robot simulation frame
+ */
+function updateRobotSimulation(btn) {
+    if (!robotSimulation.active || !robotSimulation.ctx) return;
+
+    const ctx = robotSimulation.ctx;
+    const canvas = robotSimulation.canvas;
+    const robot = robotSimulation.robot;
+    const env = robotSimulation.environment;
+
+    // Clear canvas
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+
+    // Draw obstacles
+    for (const obs of env.obstacles) {
+        ctx.fillStyle = obs.color;
+        if (obs.round) {
+            ctx.beginPath();
+            ctx.arc(obs.x + obs.w / 2, obs.y + obs.h / 2, obs.w / 2, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        }
+    }
+
+    // Simulate sensors
+    robot.sensors.front = castRay(robot.x, robot.y, robot.angle, 100);
+    robot.sensors.left = castRay(robot.x, robot.y, robot.angle - Math.PI / 4, 60);
+    robot.sensors.right = castRay(robot.x, robot.y, robot.angle + Math.PI / 4, 60);
+
+    // Draw sensor rays
+    drawSensorRay(ctx, robot.x, robot.y, robot.angle, robot.sensors.front, '#2196f3');
+    drawSensorRay(ctx, robot.x, robot.y, robot.angle - Math.PI / 4, robot.sensors.left, '#4caf50');
+    drawSensorRay(ctx, robot.x, robot.y, robot.angle + Math.PI / 4, robot.sensors.right, '#ff9800');
+
+    // AI Navigation logic
+    if (robot.sensors.front < 30) {
+        // Obstacle ahead - turn
+        robot.angle += robot.sensors.left > robot.sensors.right ? -0.15 : 0.15;
+        robot.speed = 0.5;
+    } else if (robot.sensors.left < 20) {
+        robot.angle += 0.1;
+        robot.speed = 1.5;
+    } else if (robot.sensors.right < 20) {
+        robot.angle -= 0.1;
+        robot.speed = 1.5;
+    } else {
+        robot.speed = 2;
+    }
+
+    // Move robot
+    const nextX = robot.x + Math.cos(robot.angle) * robot.speed;
+    const nextY = robot.y + Math.sin(robot.angle) * robot.speed;
+
+    // Wall collision
+    if (nextX > robot.size && nextX < canvas.width - robot.size) {
+        robot.x = nextX;
+    } else {
+        robot.angle += Math.PI / 2;
+    }
+    if (nextY > robot.size && nextY < canvas.height - robot.size) {
+        robot.y = nextY;
+    } else {
+        robot.angle += Math.PI / 2;
+    }
+
+    // Draw robot body
+    ctx.save();
+    ctx.translate(robot.x, robot.y);
+    ctx.rotate(robot.angle);
+
+    // Robot body
+    ctx.fillStyle = '#e91e63';
+    ctx.beginPath();
+    ctx.arc(0, 0, robot.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Direction indicator
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(robot.size, 0);
+    ctx.lineTo(robot.size - 8, -5);
+    ctx.lineTo(robot.size - 8, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wheels
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-robot.size + 2, -robot.size - 3, 10, 6);
+    ctx.fillRect(-robot.size + 2, robot.size - 3, 10, 6);
+
+    ctx.restore();
+
+    // Draw robot emoji on top
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🤖', robot.x, robot.y);
+
+    // Update sensor display in connected nodes
+    updateConnectedSensorNodes(robot.sensors);
+
+    // Update preview with telemetry
+    const preview = btn?.closest('.node-content')?.querySelector('[data-preview]');
+    if (preview) {
+        preview.innerHTML = `
+            <div style="font-size:10px;color:#4caf50;">
+                📍 (${Math.round(robot.x)}, ${Math.round(robot.y)}) | 
+                🧭 ${Math.round(robot.angle * 180 / Math.PI)}° |
+                📏 ${Math.round(robot.sensors.front)}cm
+            </div>
+        `;
+    }
+}
+
+/**
+ * Cast a ray to detect obstacles
+ */
+function castRay(x, y, angle, maxDist) {
+    const env = robotSimulation.environment;
+    const canvas = robotSimulation.canvas;
+    const step = 3;
+
+    for (let d = 0; d < maxDist; d += step) {
+        const px = x + Math.cos(angle) * d;
+        const py = y + Math.sin(angle) * d;
+
+        // Check walls
+        if (px < 0 || px > canvas.width || py < 0 || py > canvas.height) {
+            return d;
+        }
+
+        // Check obstacles
+        for (const obs of env.obstacles) {
+            if (obs.round) {
+                const cx = obs.x + obs.w / 2;
+                const cy = obs.y + obs.h / 2;
+                const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+                if (dist < obs.w / 2) return d;
+            } else {
+                if (px >= obs.x && px <= obs.x + obs.w && py >= obs.y && py <= obs.y + obs.h) {
+                    return d;
+                }
+            }
+        }
+    }
+
+    return maxDist;
+}
+
+/**
+ * Draw sensor ray visualization
+ */
+function drawSensorRay(ctx, x, y, angle, distance, color) {
+    const endX = x + Math.cos(angle) * distance;
+    const endY = y + Math.sin(angle) * distance;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw detection point
+    ctx.beginPath();
+    ctx.arc(endX, endY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = distance < 30 ? '#f44336' : color;
+    ctx.fill();
+}
+
+/**
+ * Update connected sensor nodes with simulation data
+ */
+function updateConnectedSensorNodes(sensors) {
+    // Find all distance sensor nodes and update their displays
+    document.querySelectorAll('.drawflow-node').forEach(node => {
+        const name = node.querySelector('.title_box')?.textContent || '';
+        if (name.includes('Capteur') || name.includes('Distance')) {
+            const preview = node.querySelector('[data-preview]');
+            if (preview) {
+                const distance = sensors.front;
+                preview.innerHTML = `
+                    <div style="font-size:24px;">📏</div>
+                    <div style="font-size:18px;color:${distance < 30 ? '#f44336' : '#2196f3'};">${Math.round(distance)} cm</div>
+                    <div style="font-size:10px;color:#888;">En temps réel</div>
+                `;
+            }
+        }
+    });
+}
+
+/**
+ * Play robot sound (for speaker node)
+ */
+function playRobotSound(btn) {
+    const mode = btn.closest('.node-content')?.querySelector('.robot-speaker-mode')?.value || 'tts';
+    const text = btn.closest('.node-content')?.querySelector('.robot-speaker-text')?.value || 'Bonjour!';
+
+    if (mode === 'tts') {
+        speakText(text);
+    } else if (mode === 'beep') {
+        // Create beep sound
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        oscillator.start();
+        setTimeout(() => oscillator.stop(), 200);
+    }
+
+    showNotification('🔊 Son joué!', 'info');
+}
+
+/**
+ * Open fullscreen robot simulation
+ */
+function openRobotSimulatorFullscreen() {
+    const modal = document.createElement('div');
+    modal.id = 'robotSimModal';
+    modal.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;flex-direction:column;padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                <h2 style="color:#e91e63;margin:0;">🤖 Robot Simulation Lab</h2>
+                <button onclick="document.getElementById('robotSimModal').remove()" style="background:#f44336;border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">✕ Fermer</button>
+            </div>
+            <div style="flex:1;display:flex;gap:20px;">
+                <div style="flex:1;background:#1a1a2e;border-radius:12px;overflow:hidden;">
+                    <canvas id="fullscreenSimCanvas" style="width:100%;height:100%;"></canvas>
+                </div>
+                <div style="width:250px;background:rgba(255,255,255,0.05);border-radius:12px;padding:15px;">
+                    <h3 style="color:#4caf50;margin-top:0;">🎮 Contrôles</h3>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:15px;">
+                        <div></div>
+                        <button onclick="manualRobotControl('forward')" style="padding:15px;background:#4caf50;border:none;border-radius:8px;font-size:20px;cursor:pointer;">⬆️</button>
+                        <div></div>
+                        <button onclick="manualRobotControl('left')" style="padding:15px;background:#2196f3;border:none;border-radius:8px;font-size:20px;cursor:pointer;">⬅️</button>
+                        <button onclick="manualRobotControl('stop')" style="padding:15px;background:#f44336;border:none;border-radius:8px;font-size:20px;cursor:pointer;">⏹️</button>
+                        <button onclick="manualRobotControl('right')" style="padding:15px;background:#2196f3;border:none;border-radius:8px;font-size:20px;cursor:pointer;">➡️</button>
+                        <div></div>
+                        <button onclick="manualRobotControl('backward')" style="padding:15px;background:#ff9800;border:none;border-radius:8px;font-size:20px;cursor:pointer;">⬇️</button>
+                        <div></div>
+                    </div>
+                    <h3 style="color:#2196f3;">📊 Télémétrie</h3>
+                    <div id="simTelemetry" style="font-family:monospace;font-size:12px;color:#888;"></div>
+                    <h3 style="color:#ff9800;">🧠 Mode IA</h3>
+                    <select id="simAIMode" onchange="setRobotAIMode(this.value)" style="width:100%;padding:8px;background:#333;border:1px solid #444;border-radius:6px;color:#fff;">
+                        <option value="auto">🤖 Automatique</option>
+                        <option value="manual">🎮 Manuel</option>
+                        <option value="follow">👤 Suivi souris</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Initialize fullscreen canvas
+    const canvas = document.getElementById('fullscreenSimCanvas');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    robotSimulation.canvas = canvas;
+    robotSimulation.ctx = canvas.getContext('2d');
+    robotSimulation.active = true;
+    robotSimulation.robot.x = 100;
+    robotSimulation.robot.y = canvas.height / 2;
+
+    setupEnvironment('room');
+
+    // Start animation
+    if (robotSimulation.interval) clearInterval(robotSimulation.interval);
+    robotSimulation.interval = setInterval(() => {
+        updateFullscreenSimulation();
+    }, 30);
+}
+
+/**
+ * Manual robot control
+ */
+function manualRobotControl(direction) {
+    const robot = robotSimulation.robot;
+    switch (direction) {
+        case 'forward': robot.speed = 3; break;
+        case 'backward': robot.speed = -2; break;
+        case 'left': robot.angle -= 0.3; break;
+        case 'right': robot.angle += 0.3; break;
+        case 'stop': robot.speed = 0; break;
+    }
+}
+
+/**
+ * Set robot AI mode
+ */
+let robotAIMode = 'auto';
+function setRobotAIMode(mode) {
+    robotAIMode = mode;
+    showNotification(`🤖 Mode: ${mode}`, 'info');
+}
+
+/**
+ * Fullscreen simulation update
+ */
+function updateFullscreenSimulation() {
+    if (!robotSimulation.active || !robotSimulation.ctx) return;
+
+    const ctx = robotSimulation.ctx;
+    const canvas = robotSimulation.canvas;
+    const robot = robotSimulation.robot;
+    const env = robotSimulation.environment;
+
+    // Clear
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    // Obstacles (scaled)
+    const scale = Math.min(canvas.width / 300, canvas.height / 200);
+    for (const obs of env.obstacles) {
+        ctx.fillStyle = obs.color;
+        const sx = obs.x * scale, sy = obs.y * scale, sw = obs.w * scale, sh = obs.h * scale;
+        if (obs.round) {
+            ctx.beginPath();
+            ctx.arc(sx + sw / 2, sy + sh / 2, sw / 2, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillRect(sx, sy, sw, sh);
+        }
+    }
+
+    // Sensors
+    robot.sensors.front = castRay(robot.x, robot.y, robot.angle, 150);
+    robot.sensors.left = castRay(robot.x, robot.y, robot.angle - Math.PI / 4, 100);
+    robot.sensors.right = castRay(robot.x, robot.y, robot.angle + Math.PI / 4, 100);
+
+    drawSensorRay(ctx, robot.x, robot.y, robot.angle, robot.sensors.front, '#2196f3');
+    drawSensorRay(ctx, robot.x, robot.y, robot.angle - Math.PI / 4, robot.sensors.left, '#4caf50');
+    drawSensorRay(ctx, robot.x, robot.y, robot.angle + Math.PI / 4, robot.sensors.right, '#ff9800');
+
+    // AI Navigation (if auto mode)
+    if (robotAIMode === 'auto') {
+        if (robot.sensors.front < 50) {
+            robot.angle += robot.sensors.left > robot.sensors.right ? -0.1 : 0.1;
+            robot.speed = 1;
+        } else {
+            robot.speed = 2.5;
+        }
+    }
+
+    // Move
+    const nextX = robot.x + Math.cos(robot.angle) * robot.speed;
+    const nextY = robot.y + Math.sin(robot.angle) * robot.speed;
+    if (nextX > 30 && nextX < canvas.width - 30) robot.x = nextX;
+    else robot.angle += Math.PI / 2;
+    if (nextY > 30 && nextY < canvas.height - 30) robot.y = nextY;
+    else robot.angle += Math.PI / 2;
+
+    // Draw robot (larger)
+    ctx.save();
+    ctx.translate(robot.x, robot.y);
+    ctx.rotate(robot.angle);
+
+    ctx.fillStyle = '#e91e63';
+    ctx.beginPath();
+    ctx.arc(0, 0, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(25, 0);
+    ctx.lineTo(15, -8);
+    ctx.lineTo(15, 8);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    ctx.font = '24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🤖', robot.x, robot.y);
+
+    // Update telemetry
+    const telemetry = document.getElementById('simTelemetry');
+    if (telemetry) {
+        telemetry.innerHTML = `
+            Position: (${Math.round(robot.x)}, ${Math.round(robot.y)})<br>
+            Angle: ${Math.round(robot.angle * 180 / Math.PI)}°<br>
+            Vitesse: ${robot.speed.toFixed(1)} cm/s<br>
+            <br>
+            <span style="color:#2196f3;">Avant: ${Math.round(robot.sensors.front)} cm</span><br>
+            <span style="color:#4caf50;">Gauche: ${Math.round(robot.sensors.left)} cm</span><br>
+            <span style="color:#ff9800;">Droite: ${Math.round(robot.sensors.right)} cm</span>
+        `;
+    }
+}
