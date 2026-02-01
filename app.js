@@ -10266,41 +10266,23 @@ function loadRobotWorkflow(workflowId) {
 
     const addedNodeIds = [];
 
-    // Add nodes
+    // Add nodes using addNodeByType which has full configs
     workflow.nodes.forEach((node, index) => {
-        const config = {
-            'robot-chassis': { name: '🦿 Chassis Robot', inputs: 0, outputs: 1 },
-            'robot-motor': { name: '⚙️ Moteur', inputs: 1, outputs: 1 },
-            'robot-distance': { name: '📏 Capteur Distance', inputs: 0, outputs: 1 },
-            'robot-camera': { name: '👁️ Caméra Vision', inputs: 0, outputs: 1 },
-            'robot-imu': { name: '🧭 IMU (Gyro)', inputs: 0, outputs: 1 },
-            'robot-led': { name: '💡 LED', inputs: 1, outputs: 0 },
-            'robot-speaker': { name: '🔊 Haut-parleur', inputs: 1, outputs: 0 },
-            'robot-gripper': { name: '✋ Pince', inputs: 1, outputs: 1 },
-            'robot-brain': { name: '🧠 Cerveau IA', inputs: 2, outputs: 3 },
-            'robot-navigation': { name: '🗺️ Navigation', inputs: 1, outputs: 1 },
-            'robot-behavior': { name: '🎭 Comportement', inputs: 1, outputs: 1 },
-            'robot-simulator': { name: '🎮 Simulateur', inputs: 3, outputs: 1 }
-        };
+        // Use the existing addNodeByType function
+        addNodeByType(node.type, node.x, node.y);
 
-        const nodeConfig = config[node.type];
-        if (nodeConfig && nodeEditor) {
-            const id = nodeEditor.addNode(
-                `${node.type}_${nodeId}`,
-                nodeConfig.inputs,
-                nodeConfig.outputs,
-                node.x,
-                node.y,
-                nodeConfig.name,
-                {},
-                nodeConfigs[node.type]?.html || '<div>Node</div>'
-            );
-            addedNodeIds.push(id);
-            nodeId++;
-        }
+        // Get the last added node ID
+        setTimeout(() => {
+            const nodes = document.querySelectorAll('.drawflow-node');
+            if (nodes.length > 0) {
+                const lastNode = nodes[nodes.length - 1];
+                const nodeIdAttr = lastNode.id.replace('node-', '');
+                addedNodeIds[index] = parseInt(nodeIdAttr);
+            }
+        }, 100 * index);
     });
 
-    // Add connections after a short delay
+    // Add connections after nodes are placed
     setTimeout(() => {
         workflow.connections.forEach(conn => {
             const fromId = addedNodeIds[conn.from];
@@ -10314,8 +10296,8 @@ function loadRobotWorkflow(workflowId) {
             }
         });
 
-        showNotification(`✅ Workflow "${workflow.name}" chargé!`, 'success');
-    }, 500);
+        showNotification(`✅ Workflow "${workflow.name}" chargé avec ${workflow.nodes.length} nodes!`, 'success');
+    }, 1500);
 }
 
 /**
