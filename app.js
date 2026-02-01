@@ -10160,3 +10160,362 @@ if (typeof MutationObserver !== 'undefined') {
         }
     }, 2000);
 }
+
+// ========== ROBOT WORKFLOW TEMPLATES ==========
+
+/**
+ * Pre-built robot workflows
+ */
+const robotWorkflows = {
+    'obstacle-avoider': {
+        name: '🚗 Robot Éviteur d\'Obstacles',
+        description: 'Robot qui avance et évite les obstacles automatiquement',
+        nodes: [
+            { type: 'robot-chassis', x: 100, y: 100 },
+            { type: 'robot-motor', x: 100, y: 250 },
+            { type: 'robot-distance', x: 350, y: 100 },
+            { type: 'robot-navigation', x: 350, y: 250 },
+            { type: 'robot-simulator', x: 600, y: 175 }
+        ],
+        connections: [
+            { from: 0, to: 1 },
+            { from: 2, to: 3 },
+            { from: 1, to: 4 },
+            { from: 3, to: 4 }
+        ]
+    },
+    'line-follower': {
+        name: '➖ Robot Suiveur de Ligne',
+        description: 'Robot qui suit une ligne au sol',
+        nodes: [
+            { type: 'robot-chassis', x: 100, y: 150 },
+            { type: 'robot-motor', x: 100, y: 300 },
+            { type: 'robot-camera', x: 350, y: 100 },
+            { type: 'robot-navigation', x: 350, y: 250 },
+            { type: 'robot-simulator', x: 600, y: 175 }
+        ],
+        connections: [
+            { from: 0, to: 1 },
+            { from: 2, to: 3 },
+            { from: 3, to: 1 },
+            { from: 1, to: 4 }
+        ]
+    },
+    'smart-robot': {
+        name: '🧠 Robot Intelligent avec IA',
+        description: 'Robot avec cerveau IA qui prend des décisions',
+        nodes: [
+            { type: 'robot-chassis', x: 50, y: 100 },
+            { type: 'robot-motor', x: 50, y: 250 },
+            { type: 'robot-distance', x: 250, y: 50 },
+            { type: 'robot-camera', x: 250, y: 200 },
+            { type: 'robot-brain', x: 450, y: 125 },
+            { type: 'robot-navigation', x: 450, y: 300 },
+            { type: 'robot-led', x: 650, y: 50 },
+            { type: 'robot-speaker', x: 650, y: 200 },
+            { type: 'robot-simulator', x: 650, y: 350 }
+        ],
+        connections: [
+            { from: 0, to: 1 },
+            { from: 2, to: 4 },
+            { from: 3, to: 4 },
+            { from: 4, to: 5 },
+            { from: 4, to: 6 },
+            { from: 4, to: 7 },
+            { from: 5, to: 1 },
+            { from: 1, to: 8 }
+        ]
+    },
+    'explorer': {
+        name: '🔍 Robot Explorateur',
+        description: 'Robot qui explore et cartographie son environnement',
+        nodes: [
+            { type: 'robot-chassis', x: 100, y: 150 },
+            { type: 'robot-motor', x: 100, y: 300 },
+            { type: 'robot-distance', x: 300, y: 50 },
+            { type: 'robot-imu', x: 300, y: 200 },
+            { type: 'robot-navigation', x: 500, y: 125 },
+            { type: 'robot-behavior', x: 500, y: 300 },
+            { type: 'robot-simulator', x: 700, y: 200 }
+        ],
+        connections: [
+            { from: 0, to: 1 },
+            { from: 2, to: 4 },
+            { from: 3, to: 4 },
+            { from: 4, to: 5 },
+            { from: 5, to: 1 },
+            { from: 1, to: 6 }
+        ]
+    }
+};
+
+/**
+ * Load a robot workflow template
+ */
+function loadRobotWorkflow(workflowId) {
+    const workflow = robotWorkflows[workflowId];
+    if (!workflow) {
+        showNotification('❌ Workflow inconnu', 'error');
+        return;
+    }
+
+    // Clear current nodes (optional - ask user first)
+    if (nodeEditor && nodeEditor.clear) {
+        nodeEditor.clear();
+    }
+
+    const addedNodeIds = [];
+
+    // Add nodes
+    workflow.nodes.forEach((node, index) => {
+        const config = {
+            'robot-chassis': { name: '🦿 Chassis Robot', inputs: 0, outputs: 1 },
+            'robot-motor': { name: '⚙️ Moteur', inputs: 1, outputs: 1 },
+            'robot-distance': { name: '📏 Capteur Distance', inputs: 0, outputs: 1 },
+            'robot-camera': { name: '👁️ Caméra Vision', inputs: 0, outputs: 1 },
+            'robot-imu': { name: '🧭 IMU (Gyro)', inputs: 0, outputs: 1 },
+            'robot-led': { name: '💡 LED', inputs: 1, outputs: 0 },
+            'robot-speaker': { name: '🔊 Haut-parleur', inputs: 1, outputs: 0 },
+            'robot-gripper': { name: '✋ Pince', inputs: 1, outputs: 1 },
+            'robot-brain': { name: '🧠 Cerveau IA', inputs: 2, outputs: 3 },
+            'robot-navigation': { name: '🗺️ Navigation', inputs: 1, outputs: 1 },
+            'robot-behavior': { name: '🎭 Comportement', inputs: 1, outputs: 1 },
+            'robot-simulator': { name: '🎮 Simulateur', inputs: 3, outputs: 1 }
+        };
+
+        const nodeConfig = config[node.type];
+        if (nodeConfig && nodeEditor) {
+            const id = nodeEditor.addNode(
+                `${node.type}_${nodeId}`,
+                nodeConfig.inputs,
+                nodeConfig.outputs,
+                node.x,
+                node.y,
+                nodeConfig.name,
+                {},
+                nodeConfigs[node.type]?.html || '<div>Node</div>'
+            );
+            addedNodeIds.push(id);
+            nodeId++;
+        }
+    });
+
+    // Add connections after a short delay
+    setTimeout(() => {
+        workflow.connections.forEach(conn => {
+            const fromId = addedNodeIds[conn.from];
+            const toId = addedNodeIds[conn.to];
+            if (fromId && toId && nodeEditor) {
+                try {
+                    nodeEditor.addConnection(fromId, toId, 'output_1', 'input_1');
+                } catch (e) {
+                    console.log('Connection error:', e);
+                }
+            }
+        });
+
+        showNotification(`✅ Workflow "${workflow.name}" chargé!`, 'success');
+    }, 500);
+}
+
+/**
+ * Open workflow selection modal
+ */
+function openRobotWorkflowSelector() {
+    const modal = document.createElement('div');
+    modal.id = 'workflowModal';
+    modal.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;">
+            <div style="background:#1a1a2e;border-radius:16px;max-width:900px;width:100%;max-height:80vh;overflow:auto;padding:30px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;">
+                    <h2 style="color:#e91e63;margin:0;">🤖 Workflows Robot Prêts à l'Emploi</h2>
+                    <button onclick="document.getElementById('workflowModal').remove()" style="background:#f44336;border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">✕</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
+                    ${Object.entries(robotWorkflows).map(([id, w]) => `
+                        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:20px;cursor:pointer;border:2px solid transparent;transition:all 0.3s;" 
+                             onmouseover="this.style.borderColor='#e91e63'" 
+                             onmouseout="this.style.borderColor='transparent'"
+                             onclick="document.getElementById('workflowModal').remove();loadRobotWorkflow('${id}')">
+                            <h3 style="color:#fff;margin:0 0 10px 0;">${w.name}</h3>
+                            <p style="color:#888;margin:0 0 15px 0;font-size:14px;">${w.description}</p>
+                            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                                ${w.nodes.map(n => `<span style="background:rgba(233,30,99,0.2);color:#e91e63;padding:2px 8px;border-radius:4px;font-size:11px;">${n.type.replace('robot-', '')}</span>`).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="margin-top:25px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color:#4caf50;margin:0 0 15px 0;">💡 Comment ça marche</h3>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;font-size:13px;color:#888;">
+                        <div>
+                            <div style="font-size:24px;margin-bottom:5px;">1️⃣</div>
+                            <div>Sélectionnez un workflow</div>
+                        </div>
+                        <div>
+                            <div style="font-size:24px;margin-bottom:5px;">2️⃣</div>
+                            <div>Les nodes sont auto-connectées</div>
+                        </div>
+                        <div>
+                            <div style="font-size:24px;margin-bottom:5px;">3️⃣</div>
+                            <div>Cliquez "Démarrer" sur le Simulateur</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+/**
+ * Real-time robot behavior based on node connections
+ */
+class RobotBehaviorEngine {
+    constructor() {
+        this.running = false;
+        this.sensorData = {
+            distance: 100,
+            camera: null,
+            imu: { roll: 0, pitch: 0, yaw: 0 }
+        };
+        this.motorState = {
+            leftSpeed: 0,
+            rightSpeed: 0
+        };
+        this.brainOutput = null;
+    }
+
+    start() {
+        this.running = true;
+        this.update();
+    }
+
+    stop() {
+        this.running = false;
+    }
+
+    update() {
+        if (!this.running) return;
+
+        // Get sensor data from simulation
+        this.sensorData.distance = robotSimulation.robot.sensors.front;
+
+        // Process through navigation logic
+        this.processNavigation();
+
+        // Update motor displays
+        this.updateMotorNodes();
+
+        // Continue loop
+        requestAnimationFrame(() => this.update());
+    }
+
+    processNavigation() {
+        // Find navigation nodes and their mode
+        document.querySelectorAll('.drawflow-node').forEach(node => {
+            const name = node.querySelector('.title_box')?.textContent || '';
+            if (name.includes('Navigation')) {
+                const mode = node.querySelector('.robot-nav-mode')?.value || 'avoid';
+                const param = parseFloat(node.querySelector('.robot-nav-param')?.value || 30);
+
+                // Calculate motor commands based on mode
+                if (mode === 'avoid') {
+                    if (this.sensorData.distance < param) {
+                        // Obstacle - turn
+                        this.motorState.leftSpeed = -50;
+                        this.motorState.rightSpeed = 50;
+                    } else {
+                        // Clear - forward
+                        this.motorState.leftSpeed = 100;
+                        this.motorState.rightSpeed = 100;
+                    }
+                } else if (mode === 'follow') {
+                    if (this.sensorData.distance < param) {
+                        this.motorState.leftSpeed = 0;
+                        this.motorState.rightSpeed = 0;
+                    } else if (this.sensorData.distance < param * 3) {
+                        this.motorState.leftSpeed = 80;
+                        this.motorState.rightSpeed = 80;
+                    } else {
+                        this.motorState.leftSpeed = 30;
+                        this.motorState.rightSpeed = 30;
+                    }
+                } else if (mode === 'explore') {
+                    // Random exploration
+                    if (this.sensorData.distance < param) {
+                        this.motorState.leftSpeed = Math.random() > 0.5 ? -60 : 60;
+                        this.motorState.rightSpeed = -this.motorState.leftSpeed;
+                    } else {
+                        this.motorState.leftSpeed = 70 + Math.random() * 30;
+                        this.motorState.rightSpeed = 70 + Math.random() * 30;
+                    }
+                }
+
+                // Update preview
+                const preview = node.querySelector('[data-preview]');
+                if (preview) {
+                    const status = this.sensorData.distance < param ? '⚠️ Obstacle!' : '✅ Voie libre';
+                    preview.innerHTML = `
+                        <div style="font-size:12px;color:#2196f3;">
+                            ${status}<br>
+                            L: ${Math.round(this.motorState.leftSpeed)}% | R: ${Math.round(this.motorState.rightSpeed)}%
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+
+    updateMotorNodes() {
+        document.querySelectorAll('.drawflow-node').forEach(node => {
+            const name = node.querySelector('.title_box')?.textContent || '';
+            if (name.includes('Moteur')) {
+                const preview = node.querySelector('[data-preview]');
+                if (preview) {
+                    const avgSpeed = (this.motorState.leftSpeed + this.motorState.rightSpeed) / 2;
+                    const direction = avgSpeed > 0 ? '⬆️ Avance' : avgSpeed < 0 ? '⬇️ Recule' : '⏹️ Arrêt';
+                    preview.innerHTML = `
+                        <div style="font-size:12px;">
+                            <div style="color:#4caf50;">${direction}</div>
+                            <div style="color:#888;">Puissance: ${Math.abs(Math.round(avgSpeed))}%</div>
+                        </div>
+                    `;
+                }
+            }
+        });
+    }
+}
+
+// Global behavior engine instance
+const robotBehavior = new RobotBehaviorEngine();
+
+// Override simulation start to include behavior engine
+const originalStartSim = startRobotSimulation;
+startRobotSimulation = function (btn) {
+    originalStartSim(btn);
+    robotBehavior.start();
+};
+
+const originalStopSim = stopRobotSimulation;
+stopRobotSimulation = function (btn) {
+    originalStopSim(btn);
+    robotBehavior.stop();
+};
+
+// Add workflow button to node editor
+function addWorkflowButton() {
+    const toolbar = document.querySelector('.node-editor-toolbar, #nodeEditorModal .modal-header');
+    if (toolbar && !document.querySelector('#workflowBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'workflowBtn';
+        btn.innerHTML = '🤖 Workflows';
+        btn.style.cssText = 'margin-left:10px;padding:8px 16px;background:#e91e63;border:none;color:#fff;border-radius:6px;cursor:pointer;font-weight:bold;';
+        btn.onclick = openRobotWorkflowSelector;
+        toolbar.appendChild(btn);
+    }
+}
+
+// Initialize workflow button
+setTimeout(addWorkflowButton, 3000);
+document.addEventListener('DOMContentLoaded', () => setTimeout(addWorkflowButton, 3000));
