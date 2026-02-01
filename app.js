@@ -9655,3 +9655,508 @@ startRobotSimulation = function (btn) {
 
     showNotification(`🤖 Simulation ${width}×${height} démarrée!`, 'success');
 };
+
+// ========== ARDUINO ROBOT SYSTEM ==========
+
+/**
+ * Arduino Robot State - Real component behavior
+ */
+const arduinoRobot = {
+    connected: false,
+    port: null,
+    reader: null,
+    writer: null,
+    components: {
+        chassis: null,
+        motors: [],
+        sensors: [],
+        actuators: []
+    },
+    pins: {
+        motorLeft: { pwm: 5, dir: 4 },
+        motorRight: { pwm: 6, dir: 7 },
+        ultrasonicTrig: 9,
+        ultrasonicEcho: 10,
+        servo: 11,
+        led: 13,
+        buzzer: 8
+    }
+};
+
+/**
+ * Generate Arduino code from connected nodes
+ */
+function generateArduinoCode() {
+    // Analyze connected nodes
+    const nodes = collectRobotNodes();
+
+    let code = `
+// ===================================
+// 🤖 Code Généré par Yevedia Robot Lab
+// ===================================
+// Date: ${new Date().toLocaleString('fr-FR')}
+// Plateforme: Arduino Uno/Nano
+// ===================================
+
+`;
+
+    // Add includes based on components
+    code += `// Bibliothèques\n`;
+    if (nodes.hasServo) code += `#include <Servo.h>\n`;
+    if (nodes.hasUltrasonic) code += `// HC-SR04 Ultrasonic Sensor\n`;
+    code += `\n`;
+
+    // Pin definitions
+    code += `// === DÉFINITION DES BROCHES ===\n`;
+    code += `// Moteurs (L298N ou similaire)\n`;
+    code += `#define MOTOR_L_PWM ${arduinoRobot.pins.motorLeft.pwm}\n`;
+    code += `#define MOTOR_L_DIR ${arduinoRobot.pins.motorLeft.dir}\n`;
+    code += `#define MOTOR_R_PWM ${arduinoRobot.pins.motorRight.pwm}\n`;
+    code += `#define MOTOR_R_DIR ${arduinoRobot.pins.motorRight.dir}\n`;
+
+    if (nodes.hasUltrasonic) {
+        code += `\n// Capteur Ultrason HC-SR04\n`;
+        code += `#define TRIG_PIN ${arduinoRobot.pins.ultrasonicTrig}\n`;
+        code += `#define ECHO_PIN ${arduinoRobot.pins.ultrasonicEcho}\n`;
+    }
+
+    if (nodes.hasServo) {
+        code += `\n// Servo\n`;
+        code += `#define SERVO_PIN ${arduinoRobot.pins.servo}\n`;
+        code += `Servo monServo;\n`;
+    }
+
+    if (nodes.hasLed) {
+        code += `\n// LED\n`;
+        code += `#define LED_PIN ${arduinoRobot.pins.led}\n`;
+    }
+
+    if (nodes.hasSpeaker) {
+        code += `\n// Buzzer\n`;
+        code += `#define BUZZER_PIN ${arduinoRobot.pins.buzzer}\n`;
+    }
+
+    // Variables
+    code += `\n// === VARIABLES ===\n`;
+    code += `int vitesse = ${nodes.motorSpeed || 150}; // 0-255\n`;
+    code += `int distanceObstacle = 0;\n`;
+    code += `int distanceMin = ${nodes.minDistance || 20}; // cm\n`;
+    code += `\n`;
+
+    // Setup function
+    code += `// === SETUP ===\n`;
+    code += `void setup() {\n`;
+    code += `  Serial.begin(9600);\n`;
+    code += `  Serial.println("🤖 Robot Yevedia initialisé!");\n`;
+    code += `  \n`;
+    code += `  // Configuration moteurs\n`;
+    code += `  pinMode(MOTOR_L_PWM, OUTPUT);\n`;
+    code += `  pinMode(MOTOR_L_DIR, OUTPUT);\n`;
+    code += `  pinMode(MOTOR_R_PWM, OUTPUT);\n`;
+    code += `  pinMode(MOTOR_R_DIR, OUTPUT);\n`;
+
+    if (nodes.hasUltrasonic) {
+        code += `  \n  // Configuration ultrason\n`;
+        code += `  pinMode(TRIG_PIN, OUTPUT);\n`;
+        code += `  pinMode(ECHO_PIN, INPUT);\n`;
+    }
+
+    if (nodes.hasServo) {
+        code += `  \n  // Configuration servo\n`;
+        code += `  monServo.attach(SERVO_PIN);\n`;
+        code += `  monServo.write(90);\n`;
+    }
+
+    if (nodes.hasLed) {
+        code += `  \n  // Configuration LED\n`;
+        code += `  pinMode(LED_PIN, OUTPUT);\n`;
+    }
+
+    if (nodes.hasSpeaker) {
+        code += `  \n  // Configuration buzzer\n`;
+        code += `  pinMode(BUZZER_PIN, OUTPUT);\n`;
+        code += `  beep(100); // Bip de démarrage\n`;
+    }
+
+    code += `}\n\n`;
+
+    // Sensor functions
+    if (nodes.hasUltrasonic) {
+        code += `// === CAPTEUR DISTANCE ===\n`;
+        code += `int lireDistance() {\n`;
+        code += `  digitalWrite(TRIG_PIN, LOW);\n`;
+        code += `  delayMicroseconds(2);\n`;
+        code += `  digitalWrite(TRIG_PIN, HIGH);\n`;
+        code += `  delayMicroseconds(10);\n`;
+        code += `  digitalWrite(TRIG_PIN, LOW);\n`;
+        code += `  \n`;
+        code += `  long duree = pulseIn(ECHO_PIN, HIGH);\n`;
+        code += `  int distance = duree * 0.034 / 2;\n`;
+        code += `  return distance;\n`;
+        code += `}\n\n`;
+    }
+
+    // Motor functions
+    code += `// === CONTRÔLE MOTEURS ===\n`;
+    code += `void avancer(int vitesse) {\n`;
+    code += `  digitalWrite(MOTOR_L_DIR, HIGH);\n`;
+    code += `  digitalWrite(MOTOR_R_DIR, HIGH);\n`;
+    code += `  analogWrite(MOTOR_L_PWM, vitesse);\n`;
+    code += `  analogWrite(MOTOR_R_PWM, vitesse);\n`;
+    code += `}\n\n`;
+
+    code += `void reculer(int vitesse) {\n`;
+    code += `  digitalWrite(MOTOR_L_DIR, LOW);\n`;
+    code += `  digitalWrite(MOTOR_R_DIR, LOW);\n`;
+    code += `  analogWrite(MOTOR_L_PWM, vitesse);\n`;
+    code += `  analogWrite(MOTOR_R_PWM, vitesse);\n`;
+    code += `}\n\n`;
+
+    code += `void tournerGauche(int vitesse) {\n`;
+    code += `  digitalWrite(MOTOR_L_DIR, LOW);\n`;
+    code += `  digitalWrite(MOTOR_R_DIR, HIGH);\n`;
+    code += `  analogWrite(MOTOR_L_PWM, vitesse);\n`;
+    code += `  analogWrite(MOTOR_R_PWM, vitesse);\n`;
+    code += `}\n\n`;
+
+    code += `void tournerDroite(int vitesse) {\n`;
+    code += `  digitalWrite(MOTOR_L_DIR, HIGH);\n`;
+    code += `  digitalWrite(MOTOR_R_DIR, LOW);\n`;
+    code += `  analogWrite(MOTOR_L_PWM, vitesse);\n`;
+    code += `  analogWrite(MOTOR_R_PWM, vitesse);\n`;
+    code += `}\n\n`;
+
+    code += `void arreter() {\n`;
+    code += `  analogWrite(MOTOR_L_PWM, 0);\n`;
+    code += `  analogWrite(MOTOR_R_PWM, 0);\n`;
+    code += `}\n\n`;
+
+    if (nodes.hasSpeaker) {
+        code += `// === BUZZER ===\n`;
+        code += `void beep(int duree) {\n`;
+        code += `  tone(BUZZER_PIN, 1000, duree);\n`;
+        code += `}\n\n`;
+    }
+
+    // Main loop based on navigation mode
+    code += `// === BOUCLE PRINCIPALE ===\n`;
+    code += `void loop() {\n`;
+
+    if (nodes.hasUltrasonic && nodes.hasNavigation) {
+        code += `  // Lire la distance\n`;
+        code += `  distanceObstacle = lireDistance();\n`;
+        code += `  Serial.print("Distance: ");\n`;
+        code += `  Serial.println(distanceObstacle);\n`;
+        code += `  \n`;
+
+        if (nodes.navigationMode === 'avoid') {
+            code += `  // Mode évitement d'obstacles\n`;
+            code += `  if (distanceObstacle < distanceMin) {\n`;
+            code += `    // Obstacle détecté!\n`;
+            code += `    arreter();\n`;
+            if (nodes.hasSpeaker) code += `    beep(200);\n`;
+            if (nodes.hasLed) code += `    digitalWrite(LED_PIN, HIGH);\n`;
+            code += `    delay(200);\n`;
+            code += `    reculer(vitesse);\n`;
+            code += `    delay(300);\n`;
+            code += `    tournerDroite(vitesse);\n`;
+            code += `    delay(400);\n`;
+            if (nodes.hasLed) code += `    digitalWrite(LED_PIN, LOW);\n`;
+            code += `  } else {\n`;
+            code += `    // Voie libre - avancer\n`;
+            code += `    avancer(vitesse);\n`;
+            code += `  }\n`;
+        } else if (nodes.navigationMode === 'follow') {
+            code += `  // Mode suivi (suivre un objet)\n`;
+            code += `  if (distanceObstacle > 30 && distanceObstacle < 100) {\n`;
+            code += `    avancer(vitesse);\n`;
+            code += `  } else if (distanceObstacle <= 30) {\n`;
+            code += `    arreter();\n`;
+            code += `  } else {\n`;
+            code += `    arreter();\n`;
+            code += `    // Chercher...\n`;
+            code += `  }\n`;
+        }
+    } else {
+        code += `  // Mode simple - avancer\n`;
+        code += `  avancer(vitesse);\n`;
+    }
+
+    code += `  \n  delay(100);\n`;
+    code += `}\n`;
+
+    return code;
+}
+
+/**
+ * Collect robot nodes from the editor
+ */
+function collectRobotNodes() {
+    const nodes = {
+        hasMotor: false,
+        hasUltrasonic: false,
+        hasServo: false,
+        hasLed: false,
+        hasSpeaker: false,
+        hasNavigation: false,
+        hasBrain: false,
+        motorSpeed: 150,
+        minDistance: 20,
+        navigationMode: 'avoid'
+    };
+
+    // Check all nodes in the editor
+    document.querySelectorAll('.drawflow-node').forEach(node => {
+        const name = node.querySelector('.title_box')?.textContent?.toLowerCase() || '';
+
+        if (name.includes('moteur')) nodes.hasMotor = true;
+        if (name.includes('distance') || name.includes('capteur')) nodes.hasUltrasonic = true;
+        if (name.includes('pince') || name.includes('servo')) nodes.hasServo = true;
+        if (name.includes('led')) nodes.hasLed = true;
+        if (name.includes('parleur') || name.includes('speaker')) nodes.hasSpeaker = true;
+        if (name.includes('navigation')) {
+            nodes.hasNavigation = true;
+            const modeSelect = node.querySelector('.robot-nav-mode');
+            if (modeSelect) nodes.navigationMode = modeSelect.value;
+        }
+        if (name.includes('cerveau') || name.includes('brain')) nodes.hasBrain = true;
+
+        // Get motor speed
+        const speedInput = node.querySelector('.robot-motor-power');
+        if (speedInput) nodes.motorSpeed = Math.round(parseInt(speedInput.value) * 2.55);
+
+        // Get min distance
+        const distInput = node.querySelector('.robot-nav-param');
+        if (distInput) nodes.minDistance = parseInt(distInput.value);
+    });
+
+    return nodes;
+}
+
+/**
+ * Export Arduino code to file
+ */
+function exportArduinoCode() {
+    const code = generateArduinoCode();
+
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `robot_yevedia_${Date.now()}.ino`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showNotification('📥 Code Arduino exporté!', 'success');
+}
+
+/**
+ * Open Arduino code preview modal
+ */
+function openArduinoCodePreview() {
+    const code = generateArduinoCode();
+
+    const modal = document.createElement('div');
+    modal.id = 'arduinoCodeModal';
+    modal.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;flex-direction:column;padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                <h2 style="color:#00bcd4;margin:0;">⚡ Code Arduino Généré</h2>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="exportArduinoCode()" style="background:#4caf50;border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">📥 Télécharger .ino</button>
+                    <button onclick="copyArduinoCode()" style="background:#2196f3;border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">📋 Copier</button>
+                    <button onclick="document.getElementById('arduinoCodeModal').remove()" style="background:#f44336;border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;">✕ Fermer</button>
+                </div>
+            </div>
+            <div style="flex:1;display:flex;gap:20px;">
+                <div style="flex:1;background:#1e1e1e;border-radius:12px;overflow:auto;padding:15px;">
+                    <pre style="margin:0;color:#d4d4d4;font-family:'Fira Code',monospace;font-size:13px;line-height:1.5;"><code id="arduinoCodeContent">${escapeHtml(code)}</code></pre>
+                </div>
+                <div style="width:280px;background:rgba(255,255,255,0.05);border-radius:12px;padding:15px;">
+                    <h3 style="color:#ff9800;margin-top:0;">📦 Composants Détectés</h3>
+                    <div id="componentsList" style="font-size:13px;color:#aaa;"></div>
+                    <h3 style="color:#e91e63;margin-top:20px;">🔌 Branchements</h3>
+                    <div style="font-size:12px;color:#888;font-family:monospace;">
+                        <div>Motor L: PWM→5, DIR→4</div>
+                        <div>Motor R: PWM→6, DIR→7</div>
+                        <div>Ultrason: TRIG→9, ECHO→10</div>
+                        <div>Servo: →11</div>
+                        <div>LED: →13</div>
+                        <div>Buzzer: →8</div>
+                    </div>
+                    <h3 style="color:#9c27b0;margin-top:20px;">🔗 WebSerial</h3>
+                    <button onclick="connectArduinoSerial()" style="width:100%;padding:10px;background:#9c27b0;border:none;color:#fff;border-radius:6px;cursor:pointer;margin-top:5px;">🔌 Connecter Arduino</button>
+                    <div id="serialStatus" style="margin-top:10px;font-size:12px;color:#666;">Non connecté</div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Update components list
+    const nodes = collectRobotNodes();
+    const list = document.getElementById('componentsList');
+    if (list) {
+        list.innerHTML = `
+            ${nodes.hasMotor ? '<div style="color:#4caf50;">✅ Moteurs DC</div>' : '<div style="color:#666;">❌ Moteurs</div>'}
+            ${nodes.hasUltrasonic ? '<div style="color:#4caf50;">✅ Capteur Distance</div>' : '<div style="color:#666;">❌ Capteur Distance</div>'}
+            ${nodes.hasNavigation ? '<div style="color:#4caf50;">✅ Navigation (' + nodes.navigationMode + ')</div>' : '<div style="color:#666;">❌ Navigation</div>'}
+            ${nodes.hasLed ? '<div style="color:#4caf50;">✅ LED</div>' : '<div style="color:#666;">❌ LED</div>'}
+            ${nodes.hasSpeaker ? '<div style="color:#4caf50;">✅ Buzzer</div>' : '<div style="color:#666;">❌ Buzzer</div>'}
+            ${nodes.hasServo ? '<div style="color:#4caf50;">✅ Servo/Pince</div>' : '<div style="color:#666;">❌ Servo</div>'}
+            ${nodes.hasBrain ? '<div style="color:#4caf50;">✅ Cerveau IA</div>' : '<div style="color:#666;">❌ Cerveau IA</div>'}
+        `;
+    }
+}
+
+/**
+ * Copy Arduino code to clipboard
+ */
+function copyArduinoCode() {
+    const code = generateArduinoCode();
+    navigator.clipboard.writeText(code).then(() => {
+        showNotification('📋 Code copié!', 'success');
+    });
+}
+
+/**
+ * Escape HTML for code display
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Connect to Arduino via WebSerial API
+ */
+async function connectArduinoSerial() {
+    const status = document.getElementById('serialStatus');
+
+    if (!('serial' in navigator)) {
+        showNotification('❌ WebSerial non supporté par ce navigateur', 'error');
+        if (status) status.innerHTML = '<span style="color:#f44336;">WebSerial non supporté</span>';
+        return;
+    }
+
+    try {
+        // Request port
+        arduinoRobot.port = await navigator.serial.requestPort();
+        await arduinoRobot.port.open({ baudRate: 9600 });
+
+        arduinoRobot.connected = true;
+        if (status) status.innerHTML = '<span style="color:#4caf50;">✅ Arduino connecté!</span>';
+        showNotification('🔌 Arduino connecté!', 'success');
+
+        // Start reading
+        startSerialReading();
+
+    } catch (error) {
+        console.error('Serial error:', error);
+        if (status) status.innerHTML = `<span style="color:#f44336;">Erreur: ${error.message}</span>`;
+        showNotification('❌ Erreur de connexion', 'error');
+    }
+}
+
+/**
+ * Start reading from serial port
+ */
+async function startSerialReading() {
+    if (!arduinoRobot.port || !arduinoRobot.connected) return;
+
+    const decoder = new TextDecoderStream();
+    const inputDone = arduinoRobot.port.readable.pipeTo(decoder.writable);
+    arduinoRobot.reader = decoder.readable.getReader();
+
+    try {
+        while (arduinoRobot.connected) {
+            const { value, done } = await arduinoRobot.reader.read();
+            if (done) break;
+            if (value) {
+                console.log('Arduino:', value);
+                // Update sensor displays with real data
+                updateSensorsFromSerial(value);
+            }
+        }
+    } catch (error) {
+        console.error('Read error:', error);
+    }
+}
+
+/**
+ * Send command to Arduino
+ */
+async function sendArduinoCommand(command) {
+    if (!arduinoRobot.port || !arduinoRobot.connected) {
+        showNotification('❌ Arduino non connecté', 'error');
+        return;
+    }
+
+    const encoder = new TextEncoder();
+    const writer = arduinoRobot.port.writable.getWriter();
+    await writer.write(encoder.encode(command + '\n'));
+    writer.releaseLock();
+}
+
+/**
+ * Update sensor nodes with real serial data
+ */
+function updateSensorsFromSerial(data) {
+    // Parse distance readings
+    const distMatch = data.match(/Distance:\s*(\d+)/);
+    if (distMatch) {
+        const distance = parseInt(distMatch[1]);
+        robotSimulation.robot.sensors.front = distance;
+
+        // Update all distance sensor nodes
+        document.querySelectorAll('.drawflow-node').forEach(node => {
+            const name = node.querySelector('.title_box')?.textContent || '';
+            if (name.includes('Distance') || name.includes('Capteur')) {
+                const preview = node.querySelector('[data-preview]');
+                if (preview) {
+                    preview.innerHTML = `
+                        <div style="font-size:24px;">📏</div>
+                        <div style="font-size:18px;color:${distance < 20 ? '#f44336' : '#2196f3'};">${distance} cm</div>
+                        <div style="font-size:10px;color:#4caf50;">⚡ Données réelles</div>
+                    `;
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Add Arduino export button to simulator node
+ */
+function addArduinoExportButton() {
+    // Find all simulator nodes and add export button if not present
+    document.querySelectorAll('.drawflow-node').forEach(node => {
+        const name = node.querySelector('.title_box')?.textContent || '';
+        if (name.includes('Simulateur')) {
+            const content = node.querySelector('.node-content');
+            if (content && !content.querySelector('.arduino-export-btn')) {
+                const btnContainer = document.createElement('div');
+                btnContainer.style.cssText = 'margin-top:10px;display:flex;gap:6px;';
+                btnContainer.innerHTML = `
+                    <button class="arduino-export-btn" onclick="openArduinoCodePreview()" style="flex:1;padding:8px;background:#00bcd4;border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:bold;">⚡ Arduino</button>
+                `;
+                content.appendChild(btnContainer);
+            }
+        }
+    });
+}
+
+// Call on node editor changes
+if (typeof MutationObserver !== 'undefined') {
+    const nodeObserver = new MutationObserver(() => {
+        setTimeout(addArduinoExportButton, 100);
+    });
+
+    setTimeout(() => {
+        const drawflow = document.getElementById('drawflow');
+        if (drawflow) {
+            nodeObserver.observe(drawflow, { childList: true, subtree: true });
+        }
+    }, 2000);
+}
